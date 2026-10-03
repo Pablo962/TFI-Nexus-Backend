@@ -9,14 +9,21 @@ async function bootstrap() {
   // Prefijo global de API
   app.setGlobalPrefix('api/v1');
 
-  // Habilitar CORS para integración con Frontend (Vite / Vercel)
+  // Habilitar CORS para integración con Frontend (Local, Vercel, Netlify y dominios personalizados)
+  const allowedOrigins: (string | RegExp)[] = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:4173',
+    /^http:\/\/localhost:[0-9]+$/,
+    /\.vercel\.app$/,
+    /\.netlify\.app$/,
+  ];
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://localhost:4173',
-      /^http:\/\/localhost:[0-9]+$/,
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
