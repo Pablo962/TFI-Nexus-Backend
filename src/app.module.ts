@@ -11,10 +11,12 @@ import { TrainingModule } from './modules/training/training.module.js';
 import { PorterModule } from './modules/porter/porter.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { ExportModule } from './modules/export/export.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
     ExportModule,
     AuthModule,
     EmployeesModule,
