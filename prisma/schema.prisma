@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN_HR
+  MANAGER
+  EMPLOYEE
+  RECRUITER
+}
+
+enum RiskStatus {
+  optimal
+  moderate
+  spof
+}
+
+enum JobStatus {
+  critical
+  operational
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(EMPLOYEE)
+  employeeId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model JobPosition {
+  id                    String      @id @default(uuid())
+  code                  String      @unique
+  title                 String
+  department            String
+  status                JobStatus   @default(operational)
+  activeIncumbentsCount Int         @default(1)
+  complianceRate        Float       @default(100)
+  division              String
+  reportsTo             String
+  supervises            String
+  salaryBand            String
+  mission               String
+  purposeLink           String?
+  internalRelations     String?
+  externalRelations     String?
+  formalAuthority       String?
+  workingConditions     Json?
+  responsibilities      Json?
+  techSkills            Json?
+  softSkills            Json?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  employees             Employee[]
+  candidates            Candidate[]
+
+  @@map("job_positions")
+}
+
+model Employee {
+  id                  String       @id
+  empId               String       @unique
+  name                String
+  email               String       @unique
+  phone               String?
+  role                String
+  area                String
+  tenure              String
+  contract            String
+  location            String
+  salaryBand          String
+  percentile          String
+  avatar              String
+  supervisorName      String
+  supervisorRole      String
+  supervisorAvatar    String
+  roleMatch           Float        @default(90)
+  gFactor             Float        @default(1.0)
+  status              String       @default("Óptimo")
+  badge               String       @default("Referente Técnico")
+  criticality         Float        @default(8.5)
+  riskStatus          RiskStatus   @default(optimal)
+  spectrumSkills      Json?
+  hardSkills          Json?
+  softSkills          Json?
+  recommendedTraining Json?
+  reviews             Json?
+  projects            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  jobPositionId       String?
+  jobPosition         JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+  evaluations         Evaluation[]
+
+  @@map("employees")
+}
+
+model Candidate {
+  id            String       @id @default(uuid())
+  rank          Int          @default(1)
+  name          String
+  title         String
+  experience    String
+  avatar        String
+  matchScore    Int          @default(80)
+  matchLabel    String
+  techScore     Float
+  softScore     Float
+  strengths     String
+  stage         String       @default("Revisión Inicial")
+  notes         String?
+  radarScores   Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  jobPositionId String?
+  jobPosition   JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+
+  @@map("candidatos")
+}
+
+model Evaluation {
+  id               String    @id @default(uuid())
+  cycle            String    @default("Ciclo Anual 2026")
+  employeeName     String
+  role             String
+  area             String
+  avatar           String
+  evaluator        String
+  selfScore        Float
+  managerScore     Float
+  peersScore       Float
+  calibratedScore  Float
+  box9             String
+  status           String    @default("Calibrado")
+  potentialScore   Float
+  performanceScore Float
+  gapAnalysis      String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  employeeId       String
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("evaluations")
+}
+
+model LearningTrack {
+  id                String   @id
+  title             String
+  technicalTitle    String?
+  category          String
+  level             String
+  hours             Int
+  enrolledCount     Int      @default(0)
+  completionRate    Float    @default(0)
+  gapTarget         String
+  provider          String
+  certification     String
+  description       String
+  enrolledEmployees Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("learning_tracks")
+}
+
+model PorterActivity {
+  id               Int      @id
+  step             String
+  name             String
+  subname          String
+  layer            String   @default("primary")
+  coverage         Float    @default(90)
+  coverageStatus   String   @default("optimal")
+  headcount        Int      @default(10)
+  costEfficiency   String   @default("95% Óptimo")
+  strategicNotes   String?
+  rolesList        Json?
+  topTalent        Json?
+  skillsMatrix     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("porter_activities")
+}
