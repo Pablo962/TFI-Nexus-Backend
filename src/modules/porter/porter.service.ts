@@ -1,21 +1,73 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PORTER_ACTIVITIES } from '../../data/seed-data.js';
 import { PorterActivity } from '../../common/types.js';
 import { SimulateDto } from './dto/simulate.dto.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class PorterService {
-  private activities: PorterActivity[] = [...PORTER_ACTIVITIES];
+  private inMemoryActivities: PorterActivity[] = [...PORTER_ACTIVITIES];
+
+  constructor(@Optional() private readonly prisma?: PrismaService) {}
+
+  private toPorterActivity(act: any): PorterActivity {
+    return {
+      id: act.id,
+      step: act.step,
+      name: act.name,
+      subname: act.subname,
+      coverage: act.coverage,
+      coverageStatus: act.coverageStatus,
+      keyRoles: ['Ingenieros de sistemas', 'Líderes de arquitectura'],
+      topSkills: 'Gestión técnica y resiliencia operacional',
+      description: act.strategicNotes || 'Actividad clave en la cadena de valor NEXUS.',
+      headcount: act.headcount,
+      costEfficiency: act.costEfficiency,
+      rolesList: act.rolesList || [],
+      topTalent: act.topTalent || [],
+      skillsMatrix: act.skillsMatrix || [],
+      aiRecommendation: act.strategicNotes || undefined,
+    };
+  }
 
   async findAll() {
+    if (this.prisma) {
+      try {
+        const activities = await this.prisma.porterActivity.findMany({
+          orderBy: { id: 'asc' },
+        });
+        if (activities.length > 0) {
+          return {
+            total: activities.length,
+            data: activities.map((a) => this.toPorterActivity(a)),
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     return {
-      total: this.activities.length,
-      data: this.activities,
+      total: this.inMemoryActivities.length,
+      data: this.inMemoryActivities,
     };
   }
 
   async findOne(id: number) {
-    const activity = this.activities.find((a) => a.id === id);
+    if (this.prisma) {
+      try {
+        const activity = await this.prisma.porterActivity.findUnique({
+          where: { id: Number(id) },
+        });
+        if (activity) {
+          return this.toPorterActivity(activity);
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    const activity = this.inMemoryActivities.find((a) => a.id === Number(id));
     if (!activity) {
       throw new NotFoundException(`Actividad de Porter con ID ${id} no encontrada`);
     }

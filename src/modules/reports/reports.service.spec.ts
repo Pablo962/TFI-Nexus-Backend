@@ -11,8 +11,8 @@ describe('ReportsService', () => {
     service = new ReportsService(exportService);
   });
 
-  it('debe devolver los KPIs del dashboard ejecutivo', () => {
-    const kpis = service.getDashboardKpis('Q4 2026');
+  it('debe devolver los KPIs del dashboard ejecutivo', async () => {
+    const kpis = await service.getDashboardKpis('Q4 2026');
     expect(kpis.overallEffectiveness).toBe('94.8%');
     expect(kpis.criticalRolesCovered).toBe('92.4%');
   });

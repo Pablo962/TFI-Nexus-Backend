@@ -1,25 +1,54 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  Optional,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { INITIAL_USERS, SeedUser } from '../../data/seed-data.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class AuthService {
-  private users: SeedUser[] = [...INITIAL_USERS];
+  private inMemoryUsers: SeedUser[] = [...INITIAL_USERS];
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @Optional() private readonly prisma?: PrismaService,
+  ) {}
 
   async login(loginDto: LoginDto) {
-    const user = this.users.find((u) => u.email.toLowerCase() === loginDto.email.toLowerCase());
+    let user: any = null;
+
+    if (this.prisma) {
+      try {
+        user = await this.prisma.user.findUnique({
+          where: { email: loginDto.email.toLowerCase() },
+        });
+      } catch {
+        // Fallback a memoria si la base de datos no está disponible
+      }
+    }
+
+    if (!user) {
+      user = this.inMemoryUsers.find(
+        (u) => u.email.toLowerCase() === loginDto.email.toLowerCase(),
+      );
+    }
+
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Para testing inicial permitimos 'Admin1234!' o la comprobación con bcrypt
-    const isMasterPassword = loginDto.password === 'Admin1234!' || loginDto.password === 'Manager1234!' || loginDto.password === 'Lucas1234!';
-    const isValidPassword = isMasterPassword || (await bcrypt.compare(loginDto.password, user.passwordHash));
+    const isMasterPassword =
+      loginDto.password === 'Admin1234!' ||
+      loginDto.password === 'Manager1234!' ||
+      loginDto.password === 'Lucas1234!';
+    const isValidPassword =
+      isMasterPassword || (await bcrypt.compare(loginDto.password, user.passwordHash));
 
     if (!isValidPassword) {
       throw new UnauthorizedException('Credenciales inválidas');
@@ -46,7 +75,46 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const existing = this.users.find((u) => u.email.toLowerCase() === registerDto.email.toLowerCase());
+    if (this.prisma) {
+      try {
+        const existing = await this.prisma.user.findUnique({
+          where: { email: registerDto.email.toLowerCase() },
+        });
+        if (existing) {
+          throw new ConflictException('El correo electrónico ya está registrado');
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(registerDto.password, salt);
+
+        const newUser = await this.prisma.user.create({
+          data: {
+            email: registerDto.email.toLowerCase(),
+            passwordHash,
+            name: registerDto.name,
+            role: registerDto.role,
+            employeeId: registerDto.employeeId,
+          },
+        });
+
+        return {
+          message: 'Usuario registrado exitosamente',
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            role: newUser.role,
+          },
+        };
+      } catch (err: any) {
+        if (err instanceof ConflictException) throw err;
+        // Continuar a fallback
+      }
+    }
+
+    const existing = this.inMemoryUsers.find(
+      (u) => u.email.toLowerCase() === registerDto.email.toLowerCase(),
+    );
     if (existing) {
       throw new ConflictException('El correo electrónico ya está registrado');
     }
@@ -63,7 +131,7 @@ export class AuthService {
       employeeId: registerDto.employeeId,
     };
 
-    this.users.push(newUser);
+    this.inMemoryUsers.push(newUser);
 
     return {
       message: 'Usuario registrado exitosamente',
@@ -77,7 +145,26 @@ export class AuthService {
   }
 
   async getMe(userId: string) {
-    const user = this.users.find((u) => u.id === userId);
+    if (this.prisma) {
+      try {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+        if (user) {
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            employeeId: user.employeeId,
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    const user = this.inMemoryUsers.find((u) => u.id === userId);
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado');
     }

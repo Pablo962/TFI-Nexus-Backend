@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { ExportService } from '../export/export.service.js';
 import { GLOSARIO, ETIQUETAS_DEMANDA } from '../../data/glosario.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class ReportsService {
@@ -12,18 +13,48 @@ export class ReportsService {
     { squad: 'Ciberseguridad y Accesos', k8s: 88, zeroTrust: 100, distributed: 89, finops: 75, comm: 92, risk: 'Bajo' },
   ];
 
-  constructor(private readonly exportService: ExportService) {}
+  constructor(
+    private readonly exportService: ExportService,
+    @Optional() private readonly prisma?: PrismaService,
+  ) {}
 
-  getDashboardKpis(quarter: string = 'Q4 2026') {
+  async getDashboardKpis(quarter: string = 'Q4 2026') {
+    let activeHeadcount = 142;
+    let spofAlertsCount = 1;
+    let averageScore = '4.62 / 5.0';
+
+    if (this.prisma) {
+      try {
+        const empCount = await this.prisma.employee.count();
+        if (empCount > 0) {
+          activeHeadcount = empCount;
+        }
+
+        const spofCount = await this.prisma.employee.count({
+          where: { riskStatus: 'spof' },
+        });
+        spofAlertsCount = spofCount;
+
+        const evalAvg = await this.prisma.evaluation.aggregate({
+          _avg: { performanceScore: true },
+        });
+        if (evalAvg._avg.performanceScore) {
+          averageScore = `${evalAvg._avg.performanceScore.toFixed(2)} / 5.0`;
+        }
+      } catch {
+        // Fallback a valores nominales
+      }
+    }
+
     return {
       period: quarter,
       overallEffectiveness: '94.8%',
-      averagePerformanceScore: '4.62 / 5.0',
+      averagePerformanceScore: averageScore,
       criticalRolesCovered: '92.4%',
       criticalRolesDetail: '13 de 14 roles con responsable',
       trainingRoi: '3.8x',
-      activeHeadcount: 142,
-      spofAlertsCount: 1, // Carlos Ruiz
+      activeHeadcount,
+      spofAlertsCount,
       updatedAt: new Date().toISOString(),
     };
   }

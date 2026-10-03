@@ -1,15 +1,116 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { EMPLOYEES_DATA, TALENT_PERSONS } from '../../data/seed-data.js';
 import { EmployeeProfile, TalentPerson } from '../../common/types.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class EmployeesService {
-  private employees: EmployeeProfile[] = [...EMPLOYEES_DATA];
-  private talentPersons: TalentPerson[] = [...TALENT_PERSONS];
+  private inMemoryEmployees: EmployeeProfile[] = [...EMPLOYEES_DATA];
+  private inMemoryTalentPersons: TalentPerson[] = [...TALENT_PERSONS];
+
+  constructor(@Optional() private readonly prisma?: PrismaService) {}
+
+  private toProfile(emp: any): EmployeeProfile {
+    return {
+      id: emp.id,
+      empId: emp.empId,
+      name: emp.name,
+      email: emp.email,
+      phone: emp.phone || '+54 9 11 5555-0100',
+      role: emp.role,
+      area: emp.area,
+      tenure: emp.tenure,
+      contract: emp.contract,
+      location: emp.location,
+      salaryBand: emp.salaryBand,
+      percentile: emp.percentile,
+      avatar: emp.avatar,
+      supervisor: {
+        name: emp.supervisorName || 'Dirección de Talento',
+        role: emp.supervisorRole || 'Directora Ejecutiva',
+        avatar:
+          emp.supervisorAvatar ||
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      },
+      roleMatch: emp.roleMatch,
+      gFactor: emp.gFactor,
+      status: emp.status,
+      badge: emp.badge,
+      spectrumSkills: emp.spectrumSkills || [],
+      hardSkills: emp.hardSkills || [],
+      softSkills: emp.softSkills || [],
+      recommendedTraining: emp.recommendedTraining || {
+        title: 'Capacitación Especializada',
+        hours: '20 horas',
+        description: 'Programa continuo de desarrollo',
+        perks: ['Certificación'],
+        gapTarget: 'Continuidad operacional',
+      },
+      reviews: emp.reviews || [],
+      projects: emp.projects || [],
+    };
+  }
+
+  private toTalentPerson(emp: any): TalentPerson {
+    const hardSkills = Array.isArray(emp.hardSkills) ? emp.hardSkills : [];
+    return {
+      id: emp.id,
+      name: emp.name,
+      role: emp.role,
+      squad: `${emp.area} • ${emp.location}`,
+      location: emp.location,
+      avatar: emp.avatar,
+      criticality: emp.criticality || 8.5,
+      skills: hardSkills.map((s: any) => ({
+        name: s.name,
+        technicalName: s.technicalName || s.name,
+        level: s.actual || 4,
+        dna: s.statusText || 'Competencia clave',
+        verified: true,
+      })),
+      activities: [
+        {
+          title: `Liderazgo y Continuidad Operativa en ${emp.role}`,
+          description: `Custodio técnico y mitigación de riesgos en ${emp.area}`,
+        },
+      ],
+      riskStatus: emp.riskStatus || 'optimal',
+    };
+  }
 
   async findAll(query?: { area?: string; search?: string; status?: string }) {
-    let result = [...this.employees];
+    if (this.prisma) {
+      try {
+        const where: any = {};
+        if (query?.area && query.area !== 'all') {
+          where.area = { contains: query.area, mode: 'insensitive' };
+        }
+        if (query?.status && query.status !== 'all') {
+          where.status = { equals: query.status, mode: 'insensitive' };
+        }
+        if (query?.search) {
+          where.OR = [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { role: { contains: query.search, mode: 'insensitive' } },
+            { empId: { contains: query.search, mode: 'insensitive' } },
+            { email: { contains: query.search, mode: 'insensitive' } },
+          ];
+        }
+
+        const employees = await this.prisma.employee.findMany({ where });
+        if (employees.length > 0 || query?.search || query?.area || query?.status) {
+          return {
+            total: employees.length,
+            data: employees.map((e) => this.toProfile(e)),
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    let result = [...this.inMemoryEmployees];
 
     if (query?.area && query.area !== 'all') {
       result = result.filter((e) => e.area.toLowerCase().includes(query.area!.toLowerCase()));
@@ -37,7 +138,33 @@ export class EmployeesService {
   }
 
   async findTalentPersons(query?: { domain?: string; risk?: string; search?: string }) {
-    let result = [...this.talentPersons];
+    if (this.prisma) {
+      try {
+        const where: any = {};
+        if (query?.risk && query.risk !== 'all') {
+          where.riskStatus = query.risk;
+        }
+        if (query?.search) {
+          where.OR = [
+            { name: { contains: query.search, mode: 'insensitive' } },
+            { role: { contains: query.search, mode: 'insensitive' } },
+            { area: { contains: query.search, mode: 'insensitive' } },
+          ];
+        }
+
+        const employees = await this.prisma.employee.findMany({ where });
+        if (employees.length > 0) {
+          return {
+            total: employees.length,
+            data: employees.map((e) => this.toTalentPerson(e)),
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    let result = [...this.inMemoryTalentPersons];
 
     if (query?.risk && query.risk !== 'all') {
       result = result.filter((t) => t.riskStatus === query.risk);
@@ -60,7 +187,20 @@ export class EmployeesService {
   }
 
   async findOne(id: string): Promise<EmployeeProfile> {
-    const employee = this.employees.find((e) => e.id === id);
+    if (this.prisma) {
+      try {
+        const employee = await this.prisma.employee.findFirst({
+          where: { OR: [{ id }, { empId: id }] },
+        });
+        if (employee) {
+          return this.toProfile(employee);
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    const employee = this.inMemoryEmployees.find((e) => e.id === id || e.empId === id);
     if (!employee) {
       throw new NotFoundException(`Colaborador con ID ${id} no encontrado`);
     }
@@ -68,6 +208,52 @@ export class EmployeesService {
   }
 
   async create(createDto: CreateEmployeeDto): Promise<EmployeeProfile> {
+    if (this.prisma) {
+      try {
+        const created = await this.prisma.employee.create({
+          data: {
+            id: createDto.id,
+            empId: createDto.empId,
+            name: createDto.name,
+            email: createDto.email,
+            phone: '+54 9 11 5555-0100',
+            role: createDto.role,
+            area: createDto.area,
+            tenure: createDto.tenure,
+            contract: 'Plazo Indeterminado (Full-time)',
+            location: 'Campus Central',
+            salaryBand: createDto.salaryBand,
+            percentile: 'Percentil 50',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+            supervisorName: 'Martín Krause',
+            supervisorRole: 'VP de Ingeniería',
+            supervisorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+            roleMatch: 90,
+            gFactor: 1.0,
+            status: 'Óptimo',
+            badge: 'Nuevo Ingreso',
+            criticality: 8.5,
+            riskStatus: 'optimal',
+            spectrumSkills: [],
+            hardSkills: [],
+            softSkills: [],
+            recommendedTraining: {
+              title: 'Inducción de Arquitectura y Estándares',
+              hours: '20 horas',
+              description: 'Capacitación en gobernanza técnica y estándares de código.',
+              perks: ['Gobernanza', 'Seguridad'],
+              gapTarget: 'Alineación organizativa',
+            },
+            reviews: [],
+            projects: [],
+          },
+        });
+        return this.toProfile(created);
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     const newEmployee: EmployeeProfile = {
       id: createDto.id,
       empId: createDto.empId,
@@ -105,16 +291,36 @@ export class EmployeesService {
       projects: [],
     };
 
-    this.employees.push(newEmployee);
+    this.inMemoryEmployees.push(newEmployee);
     return newEmployee;
   }
 
   async update(id: string, updateData: Partial<EmployeeProfile>): Promise<EmployeeProfile> {
-    const index = this.employees.findIndex((e) => e.id === id);
+    if (this.prisma) {
+      try {
+        const data: any = {};
+        if (updateData.name) data.name = updateData.name;
+        if (updateData.role) data.role = updateData.role;
+        if (updateData.area) data.area = updateData.area;
+        if (updateData.status) data.status = updateData.status;
+        if (updateData.roleMatch !== undefined) data.roleMatch = updateData.roleMatch;
+        if (updateData.gFactor !== undefined) data.gFactor = updateData.gFactor;
+
+        const updated = await this.prisma.employee.update({
+          where: { id },
+          data,
+        });
+        return this.toProfile(updated);
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
+    const index = this.inMemoryEmployees.findIndex((e) => e.id === id);
     if (index === -1) {
       throw new NotFoundException(`Colaborador con ID ${id} no encontrado`);
     }
-    this.employees[index] = { ...this.employees[index], ...updateData };
-    return this.employees[index];
+    this.inMemoryEmployees[index] = { ...this.inMemoryEmployees[index], ...updateData };
+    return this.inMemoryEmployees[index];
   }
 }
