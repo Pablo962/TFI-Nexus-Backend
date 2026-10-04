@@ -26,6 +26,7 @@ export class EvaluationsController {
     return this.evaluationsService.get9BoxData();
   }
 
+  @Get('export')
   @Get('9box/export')
   @ApiOperation({ summary: 'Exportar acta del comité 9-Box en formato Excel (.xlsx) o CSV' })
   @ApiQuery({ name: 'format', enum: ['xlsx', 'csv'], required: false })
