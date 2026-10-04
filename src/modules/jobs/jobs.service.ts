@@ -1,16 +1,80 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { JOB_POSITIONS } from '../../data/seed-data.js';
 import { JobPosition } from '../../common/types.js';
 import { CreateJobDto } from './dto/create-job.dto.js';
 import { ExportService } from '../export/export.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class JobsService {
   private inMemoryJobs: JobPosition[] = [...JOB_POSITIONS];
 
-  constructor(private readonly exportService: ExportService) {}
+  constructor(
+    private readonly exportService: ExportService,
+    @Optional() private readonly prisma?: PrismaService,
+  ) {}
+
+  private toJobPosition(j: any): JobPosition {
+    return {
+      id: j.id,
+      code: j.code,
+      title: j.title,
+      department: j.department,
+      status: j.status,
+      activeIncumbentsCount: j.activeIncumbentsCount ?? 1,
+      complianceRate: j.complianceRate ?? 100,
+      isCalibrated: true,
+      division: j.division || j.department,
+      reportsTo: j.reportsTo || 'Dirección General',
+      supervises: j.supervises || 'Sin supervisión directa',
+      salaryBand: j.salaryBand || 'Banda Salarial Oficial',
+      incumbents: j.incumbents || [],
+      mission: j.mission,
+      purposeLink: j.purposeLink || 'Impacto directo en la continuidad operativa de la plataforma.',
+      internalRelations: j.internalRelations || 'Coordinación interna de área',
+      externalRelations: j.externalRelations || 'Organismos externos vinculados',
+      formalAuthority: j.formalAuthority || 'Atribuciones conferidas por manual de funciones.',
+      responsibilities: j.responsibilities || [],
+      workingConditions: j.workingConditions || {
+        modality: 'Condiciones normales de oficina en un 100%',
+        tools: 'Terminal de trabajo y sistemas institucionales',
+        mobility: 'No requerida',
+      },
+      techSkills: j.techSkills || [],
+      softSkills: j.softSkills || [],
+    };
+  }
 
   async findAll(query?: { department?: string; onlyCritical?: boolean; search?: string }) {
+    if (this.prisma) {
+      try {
+        const where: any = {};
+        if (query?.department && query.department !== 'all') {
+          where.department = { contains: query.department, mode: 'insensitive' };
+        }
+        if (query?.onlyCritical) {
+          where.status = 'critical';
+        }
+        if (query?.search) {
+          where.OR = [
+            { title: { contains: query.search, mode: 'insensitive' } },
+            { code: { contains: query.search, mode: 'insensitive' } },
+            { department: { contains: query.search, mode: 'insensitive' } },
+          ];
+        }
+
+        const jobs = await this.prisma.jobPosition.findMany({ where });
+        if (jobs.length > 0 || query?.search || query?.department || query?.onlyCritical) {
+          return {
+            total: jobs.length,
+            data: jobs.map((j) => this.toJobPosition(j)),
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     let result = [...this.inMemoryJobs];
 
     if (query?.department && query.department !== 'all') {
@@ -38,6 +102,24 @@ export class JobsService {
   }
 
   async findOne(code: string): Promise<JobPosition> {
+    if (this.prisma) {
+      try {
+        const job = await this.prisma.jobPosition.findFirst({
+          where: {
+            OR: [
+              { code: { equals: code, mode: 'insensitive' } },
+              { id: code },
+            ],
+          },
+        });
+        if (job) {
+          return this.toJobPosition(job);
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     const job = this.inMemoryJobs.find(
       (j) => j.code.toLowerCase() === code.toLowerCase() || (j as any).id === code,
     );
@@ -48,6 +130,41 @@ export class JobsService {
   }
 
   async create(createDto: CreateJobDto): Promise<JobPosition> {
+    if (this.prisma) {
+      try {
+        const created = await this.prisma.jobPosition.create({
+          data: {
+            code: createDto.code,
+            title: createDto.title,
+            department: createDto.department,
+            status: createDto.status as any,
+            activeIncumbentsCount: 1,
+            complianceRate: 100,
+            division: createDto.division,
+            reportsTo: createDto.reportsTo,
+            supervises: createDto.supervises,
+            salaryBand: createDto.salaryBand,
+            mission: createDto.mission,
+            purposeLink: 'Impacto directo en la continuidad operativa de la plataforma.',
+            internalRelations: 'Comité de Arquitectura, Equipos de Producto.',
+            externalRelations: 'Proveedores de Nube (AWS, GCP).',
+            formalAuthority: 'Aprobación de RFCs de Arquitectura.',
+            responsibilities: [],
+            workingConditions: {
+              modality: 'Remoto 100% con guardias rotativas',
+              tools: 'MacBook Pro M3 Max, acceso root a clusters',
+              mobility: 'No requerida',
+            },
+            techSkills: (createDto.techSkills || []) as any,
+            softSkills: (createDto.softSkills || []) as any,
+          },
+        });
+        return this.toJobPosition(created);
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     const newJob: JobPosition = {
       code: createDto.code,
       title: createDto.title,

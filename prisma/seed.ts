@@ -2,6 +2,16 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
+import bcrypt from 'bcryptjs';
+
+import {
+  JOB_POSITIONS,
+  EMPLOYEES_DATA,
+  INITIAL_USERS,
+  INITIAL_TRACKS,
+  INITIAL_EVALUATIONS,
+  PORTER_ACTIVITIES,
+} from '../src/data/seed-data.js';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -12,11 +22,296 @@ const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  console.log('🌱 Iniciando carga de datos iniciales en Supabase (Modelo Relacional de 6 Tablas)...');
+const getJobId = (code: string) => {
+  const map: Record<string, string> = {
+    'PUE-2026-ARCH-03': 'pue-arch-03',
+    'PUE-2026-ENG-08': 'pue-eng-08',
+    'PUE-2026-SEC-01': 'pue-sec-01',
+    'PUE-2026-DAT-04': 'pue-dat-04',
+    'PUE-DIR-INFO-01': 'pue-dir-info-01',
+    'PUE-JEF-PROC-02': 'pue-jef-proc-02',
+    'PUE-DIG-PART-05': 'pue-dig-part-05',
+    'PUE-ESC-PART-06': 'pue-esc-part-06',
+    'PUE-REC-PART-07': 'pue-rec-part-07',
+    'PUE-PRG-ANAL-08': 'pue-prg-anal-08',
+    'PUE-TEC-SOP-09': 'pue-tec-sop-09',
+  };
+  return map[code] || code.toLowerCase().replace(/[^a-z0-9]/g, '-');
+};
 
-  // 1. Habilidades (Catálogo de competencias técnicas y blandas)
-  console.log('  -> Creando catálogo de habilidades (habilidad)...');
+async function main() {
+  console.log('🌱 Iniciando carga de datos en Supabase (Opción A: 12 Tablas)...');
+
+  // 1. Usuarios (users)
+  console.log('  -> Creando usuarios del sistema (users)...');
+  for (const u of INITIAL_USERS) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        name: u.name,
+        role: u.role as any,
+        employeeId: u.employeeId,
+      },
+      create: {
+        id: u.id,
+        email: u.email,
+        passwordHash: u.passwordHash,
+        name: u.name,
+        role: u.role as any,
+        employeeId: u.employeeId,
+      },
+    });
+  }
+  console.log(`     ✓ ${INITIAL_USERS.length} usuarios creados.`);
+
+  // 2. Puestos de Trabajo (job_positions)
+  console.log('  -> Creando catálogo de puestos de trabajo (job_positions)...');
+  for (const job of JOB_POSITIONS) {
+    const id = getJobId(job.code);
+    await prisma.jobPosition.upsert({
+      where: { code: job.code },
+      update: {
+        title: job.title,
+        department: job.department,
+        status: job.status as 'critical' | 'operational',
+        activeIncumbentsCount: job.activeIncumbentsCount,
+        complianceRate: job.complianceRate,
+        division: job.division,
+        reportsTo: job.reportsTo,
+        supervises: job.supervises,
+        salaryBand: job.salaryBand,
+        mission: job.mission,
+        purposeLink: job.purposeLink,
+        internalRelations: job.internalRelations,
+        externalRelations: job.externalRelations,
+        formalAuthority: job.formalAuthority,
+        workingConditions: job.workingConditions as any,
+        responsibilities: job.responsibilities as any,
+        techSkills: job.techSkills as any,
+        softSkills: job.softSkills as any,
+      },
+      create: {
+        id,
+        code: job.code,
+        title: job.title,
+        department: job.department,
+        status: job.status as 'critical' | 'operational',
+        activeIncumbentsCount: job.activeIncumbentsCount,
+        complianceRate: job.complianceRate,
+        division: job.division,
+        reportsTo: job.reportsTo,
+        supervises: job.supervises,
+        salaryBand: job.salaryBand,
+        mission: job.mission,
+        purposeLink: job.purposeLink,
+        internalRelations: job.internalRelations,
+        externalRelations: job.externalRelations,
+        formalAuthority: job.formalAuthority,
+        workingConditions: job.workingConditions as any,
+        responsibilities: job.responsibilities as any,
+        techSkills: job.techSkills as any,
+        softSkills: job.softSkills as any,
+      },
+    });
+  }
+  console.log(`     ✓ ${JOB_POSITIONS.length} puestos cargados.`);
+
+  // 3. Colaboradores / Empleados (employees)
+  console.log('  -> Creando colaboradores (employees)...');
+  for (const emp of EMPLOYEES_DATA) {
+    const matchedJob = JOB_POSITIONS.find(
+      (j) => j.title.toLowerCase() === emp.role.toLowerCase(),
+    );
+    const jobPositionId = matchedJob ? getJobId(matchedJob.code) : null;
+
+    await prisma.employee.upsert({
+      where: { id: emp.id },
+      update: {
+        empId: emp.empId,
+        name: emp.name,
+        email: emp.email,
+        phone: emp.phone,
+        role: emp.role,
+        area: emp.area,
+        tenure: emp.tenure,
+        contract: emp.contract,
+        location: emp.location,
+        salaryBand: emp.salaryBand,
+        percentile: emp.percentile,
+        avatar: emp.avatar,
+        supervisorName: emp.supervisor?.name || 'Dirección General',
+        supervisorRole: emp.supervisor?.role || 'Director',
+        supervisorAvatar: emp.supervisor?.avatar || emp.avatar,
+        roleMatch: emp.roleMatch,
+        gFactor: emp.gFactor,
+        status: emp.status,
+        badge: emp.badge,
+        criticality: 8.5,
+        riskStatus: (emp.status === 'Crítico' ? 'spof' : 'optimal') as any,
+        spectrumSkills: emp.spectrumSkills as any,
+        hardSkills: emp.hardSkills as any,
+        softSkills: emp.softSkills as any,
+        recommendedTraining: emp.recommendedTraining as any,
+        reviews: emp.reviews as any,
+        projects: emp.projects as any,
+        jobPositionId,
+      },
+      create: {
+        id: emp.id,
+        empId: emp.empId,
+        name: emp.name,
+        email: emp.email,
+        phone: emp.phone,
+        role: emp.role,
+        area: emp.area,
+        tenure: emp.tenure,
+        contract: emp.contract,
+        location: emp.location,
+        salaryBand: emp.salaryBand,
+        percentile: emp.percentile,
+        avatar: emp.avatar,
+        supervisorName: emp.supervisor?.name || 'Dirección General',
+        supervisorRole: emp.supervisor?.role || 'Director',
+        supervisorAvatar: emp.supervisor?.avatar || emp.avatar,
+        roleMatch: emp.roleMatch,
+        gFactor: emp.gFactor,
+        status: emp.status,
+        badge: emp.badge,
+        criticality: 8.5,
+        riskStatus: (emp.status === 'Crítico' ? 'spof' : 'optimal') as any,
+        spectrumSkills: emp.spectrumSkills as any,
+        hardSkills: emp.hardSkills as any,
+        softSkills: emp.softSkills as any,
+        recommendedTraining: emp.recommendedTraining as any,
+        reviews: emp.reviews as any,
+        projects: emp.projects as any,
+        jobPositionId,
+      },
+    });
+  }
+  console.log(`     ✓ ${EMPLOYEES_DATA.length} colaboradores creados.`);
+
+  // 4. Evaluaciones 9-Box (evaluations)
+  console.log('  -> Creando evaluaciones de desempeño (evaluations)...');
+  for (const ev of INITIAL_EVALUATIONS) {
+    await prisma.evaluation.upsert({
+      where: { id: ev.id },
+      update: {
+        employeeId: ev.employeeId,
+        employeeName: ev.employeeName,
+        role: ev.role,
+        area: ev.area,
+        cycle: ev.cycle,
+        performanceScore: ev.performanceScore,
+        potentialScore: ev.potentialScore,
+        box9: ev.box9,
+        status: ev.status,
+        selfScore: ev.selfScore,
+        managerScore: ev.managerScore,
+        peersScore: ev.peersScore,
+        calibratedScore: ev.calibratedScore,
+        gapAnalysis: ev.gapAnalysis,
+      },
+      create: {
+        id: ev.id,
+        employeeId: ev.employeeId,
+        employeeName: ev.employeeName,
+        role: ev.role,
+        area: ev.area,
+        cycle: ev.cycle,
+        performanceScore: ev.performanceScore,
+        potentialScore: ev.potentialScore,
+        box9: ev.box9,
+        status: ev.status,
+        selfScore: ev.selfScore,
+        managerScore: ev.managerScore,
+        peersScore: ev.peersScore,
+        calibratedScore: ev.calibratedScore,
+        gapAnalysis: ev.gapAnalysis,
+      },
+    });
+  }
+  console.log(`     ✓ ${INITIAL_EVALUATIONS.length} evaluaciones cargadas.`);
+
+  // 5. Cursos de Capacitación (learning_tracks)
+  console.log('  -> Creando catálogo formativo (learning_tracks)...');
+  for (const tr of INITIAL_TRACKS) {
+    const duration = (tr as any).duration || `${(tr as any).hours || 40} horas`;
+    const cost = (tr as any).cost || 'USD 1,200';
+    const status = (tr as any).status || 'En curso';
+    await prisma.learningTrack.upsert({
+      where: { id: tr.id },
+      update: {
+        title: tr.title,
+        category: tr.category,
+        duration,
+        provider: tr.provider,
+        level: tr.level,
+        cost,
+        enrolledCount: tr.enrolledCount,
+        status,
+        skillsCovered: (tr as any).skillsCovered || [],
+        modules: (tr as any).modules || [],
+        enrolledEmployees: tr.enrolledEmployees as any,
+      },
+      create: {
+        id: tr.id,
+        title: tr.title,
+        category: tr.category,
+        duration,
+        provider: tr.provider,
+        level: tr.level,
+        cost,
+        enrolledCount: tr.enrolledCount,
+        status,
+        skillsCovered: (tr as any).skillsCovered || [],
+        modules: (tr as any).modules || [],
+        enrolledEmployees: tr.enrolledEmployees as any,
+      },
+    });
+  }
+  console.log(`     ✓ ${INITIAL_TRACKS.length} cursos de capacitación creados.`);
+
+  // 6. Cadena de Valor (porter_activities)
+  console.log('  -> Creando actividades de Porter (porter_activities)...');
+  for (const pa of PORTER_ACTIVITIES) {
+    await prisma.porterActivity.upsert({
+      where: { id: pa.id },
+      update: {
+        step: pa.step,
+        name: pa.name,
+        subname: pa.subname,
+        layer: (pa.layer || 'primary') as any,
+        coverage: pa.coverage,
+        coverageStatus: pa.coverageStatus,
+        headcount: pa.headcount,
+        costEfficiency: pa.costEfficiency,
+        strategicNotes: pa.description,
+        rolesList: pa.rolesList as any,
+        topTalent: pa.topTalent as any,
+        skillsMatrix: pa.skillsMatrix as any,
+      },
+      create: {
+        id: pa.id,
+        step: pa.step,
+        name: pa.name,
+        subname: pa.subname,
+        layer: (pa.layer || 'primary') as any,
+        coverage: pa.coverage,
+        coverageStatus: pa.coverageStatus,
+        headcount: pa.headcount,
+        costEfficiency: pa.costEfficiency,
+        strategicNotes: pa.description,
+        rolesList: pa.rolesList as any,
+        topTalent: pa.topTalent as any,
+        skillsMatrix: pa.skillsMatrix as any,
+      },
+    });
+  }
+  console.log(`     ✓ ${PORTER_ACTIVITIES.length} actividades de Porter cargadas.`);
+
+  // 7. Habilidades (habilidad)
+  console.log('  -> Creando catálogo de habilidades de selección (habilidad)...');
   const HABILIDADES_SEED = [
     { id: 1, nombre: 'Kubernetes y Arquitectura Cloud', tipo: 'Técnica' },
     { id: 2, nombre: 'Ciberseguridad Zero Trust', tipo: 'Técnica' },
@@ -37,11 +332,12 @@ async function main() {
   }
   console.log(`     ✓ ${HABILIDADES_SEED.length} habilidades cargadas.`);
 
-  // 2. Vacantes (Puestos con búsqueda abierta)
+  // 8. Vacantes (vacante)
   console.log('  -> Creando vacantes (vacante)...');
   const VACANTES_SEED = [
     {
       id: 1,
+      idPuesto: 'pue-arch-03',
       titulo: 'Arquitecto de Soluciones Cloud Senior',
       tipo: 'Tiempo Completo',
       requisitos: 'Experiencia > 5 años en microservicios, AWS/GCP y Kubernetes',
@@ -49,6 +345,7 @@ async function main() {
     },
     {
       id: 2,
+      idPuesto: 'pue-eng-08',
       titulo: 'Ingeniero de Plataforma & DevOps',
       tipo: 'Tiempo Completo',
       requisitos: 'Sólido dominio de Terraform, Docker, Kubernetes y observabilidad',
@@ -56,6 +353,7 @@ async function main() {
     },
     {
       id: 3,
+      idPuesto: 'pue-sec-01',
       titulo: 'Especialista en Ciberseguridad & SOC',
       tipo: 'Tiempo Completo',
       requisitos: 'Certificación CISSP/CEH y respuesta ante incidentes críticos',
@@ -63,6 +361,7 @@ async function main() {
     },
     {
       id: 4,
+      idPuesto: 'pue-dat-04',
       titulo: 'Analista de Datos & Business Intelligence',
       tipo: 'Tiempo Completo',
       requisitos: 'SQL avanzado, Python para analítica y pipelines ETL',
@@ -74,12 +373,14 @@ async function main() {
     await prisma.vacante.upsert({
       where: { id: v.id },
       update: {
+        idPuesto: v.idPuesto,
         titulo: v.titulo,
         requisitos: v.requisitos,
         tipo: v.tipo,
       },
       create: {
         id: v.id,
+        idPuesto: v.idPuesto,
         titulo: v.titulo,
         requisitos: v.requisitos,
         tipo: v.tipo,
@@ -96,9 +397,9 @@ async function main() {
       });
     }
   }
-  console.log(`     ✓ ${VACANTES_SEED.length} vacantes y sus requisitos de habilidad vinculados.`);
+  console.log(`     ✓ ${VACANTES_SEED.length} vacantes y sus requisitos vinculados.`);
 
-  // 3. Perfiles de Postulantes (perfil)
+  // 9. Perfiles de Postulantes (perfil)
   console.log('  -> Creando perfiles de postulantes (perfil)...');
   const PERFILES_SEED = [
     {
@@ -281,9 +582,9 @@ async function main() {
       });
     }
   }
-  console.log(`     ✓ ${PERFILES_SEED.length} perfiles de postulantes cargados con sus habilidades y postulaciones.`);
+  console.log(`     ✓ ${PERFILES_SEED.length} perfiles cargados con habilidades y postulaciones.`);
 
-  console.log('✅ Base de datos Supabase poblada con éxito con las 6 tablas relacionales.');
+  console.log('✅ Base de datos Supabase poblada con éxito con las 12 tablas (Opción A).');
 }
 
 main()

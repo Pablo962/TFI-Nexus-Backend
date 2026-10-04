@@ -17,8 +17,17 @@ describe('PrismaService', () => {
     expect(typeof service.$disconnect).toBe('function');
   });
 
-  it('debe contener los 6 modelos del esquema de Prisma para Reclutamiento', () => {
+  it('debe contener los 12 modelos del esquema de Prisma (Opción A)', () => {
     service = new PrismaService();
+    // 6 modelos de Talento y Organización
+    expect(service.user).toBeDefined();
+    expect(service.jobPosition).toBeDefined();
+    expect(service.employee).toBeDefined();
+    expect(service.evaluation).toBeDefined();
+    expect(service.learningTrack).toBeDefined();
+    expect(service.porterActivity).toBeDefined();
+
+    // 6 modelos de Reclutamiento y Selección
     expect(service.vacante).toBeDefined();
     expect(service.perfil).toBeDefined();
     expect(service.habilidad).toBeDefined();

@@ -6,12 +6,185 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN_HR
+  MANAGER
+  EMPLOYEE
+  RECRUITER
+}
+
+enum RiskStatus {
+  optimal
+  moderate
+  spof
+}
+
+enum JobStatus {
+  critical
+  operational
+}
+
 // =======================================================================
-// MODELO RELACIONAL DE RECLUTAMIENTO Y SELECCIÓN (6 TABLAS DE SUPABASE)
+// BLOQUE 1: GESTIÓN DE CAPITAL HUMANO Y TALENTO (6 TABLAS)
+// =======================================================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(EMPLOYEE)
+  employeeId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model JobPosition {
+  id                    String      @id @default(uuid())
+  code                  String      @unique
+  title                 String
+  department            String
+  status                JobStatus   @default(operational)
+  activeIncumbentsCount Int         @default(1)
+  complianceRate        Float       @default(100)
+  division              String
+  reportsTo             String
+  supervises            String
+  salaryBand            String
+  mission               String
+  purposeLink           String?
+  internalRelations     String?
+  externalRelations     String?
+  formalAuthority       String?
+  workingConditions     Json?
+  responsibilities      Json?
+  techSkills            Json?
+  softSkills            Json?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  employees             Employee[]
+  vacantes              Vacante[]
+
+  @@map("job_positions")
+}
+
+model Employee {
+  id                  String       @id
+  empId               String       @unique
+  name                String
+  email               String       @unique
+  phone               String?
+  role                String
+  area                String
+  tenure              String
+  contract            String
+  location            String
+  salaryBand          String
+  percentile          String
+  avatar              String
+  supervisorName      String
+  supervisorRole      String
+  supervisorAvatar    String
+  roleMatch           Float        @default(90)
+  gFactor             Float        @default(1.0)
+  status              String       @default("Óptimo")
+  badge               String       @default("Referente Técnico")
+  criticality         Float        @default(8.5)
+  riskStatus          RiskStatus   @default(optimal)
+  spectrumSkills      Json?
+  hardSkills          Json?
+  softSkills          Json?
+  recommendedTraining Json?
+  reviews             Json?
+  projects            Json?
+
+  jobPositionId       String?
+  jobPosition         JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+  evaluations         Evaluation[]
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@map("employees")
+}
+
+model Evaluation {
+  id               String   @id @default(uuid())
+  employeeId       String
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeName     String
+  role             String
+  area             String
+  cycle            String   @default("Ciclo Anual 2026")
+  performanceScore Float
+  potentialScore   Float
+  box9             String
+  status           String   @default("Pendiente")
+  selfScore        Float
+  managerScore     Float
+  peersScore       Float
+  calibratedScore  Float
+  gapAnalysis      String
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("evaluations")
+}
+
+model LearningTrack {
+  id                String   @id
+  title             String
+  category          String?
+  duration          String?
+  provider          String?
+  level             String?
+  cost              String?
+  enrolledCount     Int      @default(0)
+  status            String?  @default("En curso")
+  skillsCovered     Json?
+  modules           Json?
+  enrolledEmployees Json?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("learning_tracks")
+}
+
+model PorterActivity {
+  id             Int      @id
+  step           String
+  name           String
+  subname        String
+  layer          String   @default("primary")
+  coverage       Float    @default(90)
+  coverageStatus String   @default("optimal")
+  headcount      Int      @default(10)
+  costEfficiency String   @default("95% Óptimo")
+  strategicNotes String?
+  rolesList      Json?
+  topTalent      Json?
+  skillsMatrix   Json?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("porter_activities")
+}
+
+// =======================================================================
+// BLOQUE 2: MODELO RELACIONAL DE RECLUTAMIENTO Y SELECCIÓN (6 TABLAS)
 // =======================================================================
 
 model Vacante {
   id                 Int                 @id @default(autoincrement()) @map("identificador")
+  idPuesto           String?             @map("id_puesto")
+  puesto             JobPosition?        @relation(fields: [idPuesto], references: [id], onDelete: SetNull)
   titulo             String              @map("titulo") @db.VarChar
   requisitos         String?             @map("requisitos") @db.VarChar
   tipo               String?             @map("tipo") @db.VarChar
