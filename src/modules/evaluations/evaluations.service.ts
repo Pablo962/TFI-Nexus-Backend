@@ -119,9 +119,26 @@ export class EvaluationsService {
     };
   }
 
-  async export9Box(format: 'xlsx' | 'csv' = 'xlsx') {
+  async export9Box(format: 'xlsx' | 'csv' | 'pdf' = 'xlsx') {
     const boxData = await this.get9BoxData();
     const evaluations = boxData.evaluations;
+
+    if (format === 'pdf') {
+      const rows = evaluations.map((e) => ({
+        label: `${e.employeeName} (${e.role} - ${e.area})`,
+        value: `9-Box: ${e.box9} | Calibrado: ${e.calibratedScore} | Estado: ${e.status}`,
+      }));
+      const buffer = await this.exportService.generatePdf(
+        'Acta Oficial del Comité de Calibración de Talento 9-Box',
+        'Consolidado de potencial de liderazgo vs. desempeño individual evaluado',
+        rows,
+      );
+      return {
+        buffer,
+        contentType: 'application/pdf',
+        filename: `Acta_9Box_Calibracion_NEXUS_${Date.now()}.pdf`,
+      };
+    }
 
     const columns = [
       { header: 'Empleado', key: 'employeeName', width: 30 },

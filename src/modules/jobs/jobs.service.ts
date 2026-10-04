@@ -207,9 +207,26 @@ export class JobsService {
     };
   }
 
-  async exportMatrix(format: 'xlsx' | 'csv' = 'xlsx') {
+  async exportMatrix(format: 'xlsx' | 'csv' | 'pdf' = 'xlsx') {
     const allJobs = await this.findAll();
     const jobsList = allJobs.data;
+
+    if (format === 'pdf') {
+      const rows = jobsList.map((j) => ({
+        label: `${j.code} - ${j.title}`,
+        value: `${j.department} | ${j.status === 'critical' ? 'Crítico (SPOF Risk)' : 'Operacional'} | Banda: ${j.salaryBand} | Cumplimiento: ${j.complianceRate}%`,
+      }));
+      const buffer = await this.exportService.generatePdf(
+        'Matriz de Descriptivos de Puesto de Trabajo (DPT)',
+        'Estructura de cargos, áreas organizacionales y requerimientos técnicos',
+        rows,
+      );
+      return {
+        buffer,
+        contentType: 'application/pdf',
+        filename: `Matriz_Puestos_NEXUS_${Date.now()}.pdf`,
+      };
+    }
 
     const columns = [
       { header: 'Código', key: 'code', width: 22 },

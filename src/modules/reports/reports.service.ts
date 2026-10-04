@@ -116,7 +116,24 @@ export class ReportsService {
     };
   }
 
-  async exportReport(format: 'xlsx' | 'csv' = 'xlsx') {
+  async exportReport(format: 'xlsx' | 'csv' | 'pdf' = 'xlsx') {
+    if (format === 'pdf') {
+      const rows = this.squadsData.map((s) => ({
+        label: `${s.squad} (Riesgo: ${s.risk})`,
+        value: `K8s: ${s.k8s}% | Zero Trust: ${s.zeroTrust}% | Distribuidos: ${s.distributed}% | FinOps: ${s.finops}%`,
+      }));
+      const buffer = await this.exportService.generatePdf(
+        'Informe Consolidado de Rendimiento de Equipos (Squads)',
+        'Resumen de People Analytics para comités ejecutivos y continuidad operacional',
+        rows,
+      );
+      return {
+        buffer,
+        contentType: 'application/pdf',
+        filename: `Reporte_Consolidado_NEXUS_${Date.now()}.pdf`,
+      };
+    }
+
     const columns = [
       { header: 'Equipo / Squad', key: 'squad', width: 32 },
       { header: 'Clústeres & K8s (%)', key: 'k8s', width: 22 },

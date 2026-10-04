@@ -31,9 +31,9 @@ export class JobsController {
   }
 
   @Get('export')
-  @ApiOperation({ summary: 'Exportar la matriz completa de puestos en Excel (.xlsx) o CSV' })
-  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv'], required: false })
-  async exportMatrix(@Query('format') format: 'xlsx' | 'csv' = 'xlsx', @Res() res: Response) {
+  @ApiOperation({ summary: 'Exportar la matriz completa de puestos en Excel (.xlsx), CSV o PDF (.pdf)' })
+  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv', 'pdf'], required: false })
+  async exportMatrix(@Query('format') format: 'xlsx' | 'csv' | 'pdf' = 'xlsx', @Res() res: Response) {
     const { buffer, contentType, filename } = await this.jobsService.exportMatrix(format);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

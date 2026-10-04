@@ -28,9 +28,9 @@ export class EvaluationsController {
 
   @Get('export')
   @Get('9box/export')
-  @ApiOperation({ summary: 'Exportar acta del comité 9-Box en formato Excel (.xlsx) o CSV' })
-  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv'], required: false })
-  async export9Box(@Query('format') format: 'xlsx' | 'csv' = 'xlsx', @Res() res: Response) {
+  @ApiOperation({ summary: 'Exportar acta del comité 9-Box en formato Excel (.xlsx), CSV o PDF (.pdf)' })
+  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv', 'pdf'], required: false })
+  async export9Box(@Query('format') format: 'xlsx' | 'csv' | 'pdf' = 'xlsx', @Res() res: Response) {
     const { buffer, contentType, filename } = await this.evaluationsService.export9Box(format);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

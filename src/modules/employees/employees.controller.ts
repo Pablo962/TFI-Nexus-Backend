@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { EmployeesService } from './employees.service.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -42,6 +43,15 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Obtener la ficha 360° completa de un colaborador por ID' })
   async findOne(@Param('id') id: string) {
     return this.employeesService.findOne(id);
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Descargar Ficha Técnica 360° del colaborador en formato PDF (.pdf)' })
+  async exportPdf(@Param('id') id: string, @Res() res: Response) {
+    const { buffer, contentType, filename } = await this.employeesService.exportEmployeePdf(id);
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.send(buffer);
   }
 
   @Post()

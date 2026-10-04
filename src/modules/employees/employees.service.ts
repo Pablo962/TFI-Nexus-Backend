@@ -3,13 +3,17 @@ import { EMPLOYEES_DATA, TALENT_PERSONS } from '../../data/seed-data.js';
 import { EmployeeProfile, TalentPerson } from '../../common/types.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { ExportService } from '../export/export.service.js';
 
 @Injectable()
 export class EmployeesService {
   private inMemoryEmployees: EmployeeProfile[] = [...EMPLOYEES_DATA];
   private inMemoryTalentPersons: TalentPerson[] = [...TALENT_PERSONS];
 
-  constructor(@Optional() private readonly prisma?: PrismaService) {}
+  constructor(
+    @Optional() private readonly prisma?: PrismaService,
+    @Optional() private readonly exportService?: ExportService,
+  ) {}
 
   private toProfile(emp: any): EmployeeProfile {
     return {
@@ -322,5 +326,47 @@ export class EmployeesService {
     }
     this.inMemoryEmployees[index] = { ...this.inMemoryEmployees[index], ...updateData };
     return this.inMemoryEmployees[index];
+  }
+
+  async exportEmployeePdf(id: string): Promise<{ buffer: Buffer; contentType: string; filename: string }> {
+    const emp = await this.findOne(id);
+    if (!this.exportService) {
+      throw new Error('ExportService no disponible');
+    }
+
+    const rows: Array<{ label: string; value: string }> = [
+      { label: 'Nombre Completo', value: emp.name },
+      { label: 'Legajo / ID', value: emp.empId || emp.id },
+      { label: 'Cargo / Posición', value: emp.role },
+      { label: 'Área / Squad', value: emp.area },
+      { label: 'Antigüedad', value: emp.tenure || 'N/A' },
+      { label: 'Contrato y Modalidad', value: `${emp.contract || 'Indefinido'} - ${emp.location || 'Híbrido'}` },
+      { label: 'Correo Electrónico', value: emp.email || 'N/A' },
+      { label: 'Teléfono', value: emp.phone || 'N/A' },
+      { label: 'Banda Salarial / Percentil', value: `${emp.salaryBand || 'N/A'} (P${emp.percentile || 50})` },
+      { label: 'Alineación al Rol (Role Match)', value: `${emp.roleMatch || 0}%` },
+      { label: 'Índice de Potencial (g-Factor)', value: `${emp.gFactor || 0}/10` },
+      { label: 'Estado Operativo', value: emp.status || 'Activo' },
+      { label: 'Líder / Supervisor', value: `${emp.supervisor?.name || 'N/A'} (${emp.supervisor?.role || 'Líder'})` },
+      { label: 'Capacitación Recomendada', value: emp.recommendedTraining?.title ? `${emp.recommendedTraining.title} (${emp.recommendedTraining.hours || ''})` : 'En plan de carrera' },
+    ];
+
+    if (emp.hardSkills && emp.hardSkills.length > 0) {
+      rows.push({
+        label: 'Competencias Técnicas Clave',
+        value: emp.hardSkills.map((s) => `${s.name}: ${s.actual}/5`).join(' | '),
+      });
+    }
+
+    const title = `Ficha Técnica 360° · ${emp.name}`;
+    const subtitle = `Legajo: ${emp.empId || emp.id} | Cargo: ${emp.role} | Área: ${emp.area}`;
+    const buffer = await this.exportService.generatePdf(title, subtitle, rows);
+    const filename = `Ficha_Colaborador_${emp.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+    return {
+      buffer,
+      contentType: 'application/pdf',
+      filename,
+    };
   }
 }

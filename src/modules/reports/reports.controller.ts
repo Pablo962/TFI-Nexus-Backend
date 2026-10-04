@@ -28,9 +28,9 @@ export class ReportsController {
   }
 
   @Get('export')
-  @ApiOperation({ summary: 'Exportar informe de analítica de squads en Excel (.xlsx) o CSV' })
-  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv'], required: false })
-  async exportReport(@Query('format') format: 'xlsx' | 'csv' = 'xlsx', @Res() res: Response) {
+  @ApiOperation({ summary: 'Exportar informe de analítica de squads en Excel (.xlsx), CSV o PDF (.pdf)' })
+  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv', 'pdf'], required: false })
+  async exportReport(@Query('format') format: 'xlsx' | 'csv' | 'pdf' = 'xlsx', @Res() res: Response) {
     const { buffer, contentType, filename } = await this.reportsService.exportReport(format);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
