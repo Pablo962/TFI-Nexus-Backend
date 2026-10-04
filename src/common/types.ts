@@ -94,7 +94,78 @@ export interface EmployeeProfile {
   projects: string[];
 }
 
+export interface UnidadRelacional {
+  id: string;
+  nombre: string;
+  idUnidadSuperior?: string | null;
+  unidadSuperior?: { id: string; nombre: string } | null;
+  subunidades?: Array<{ id: string; nombre: string }>;
+}
+
+export interface TareaRelacional {
+  id: string;
+  idFuncion?: string;
+  descripcion: string;
+}
+
+export interface FuncionRelacional {
+  id: string;
+  idPuesto?: string;
+  descripcion: string;
+  tareas: TareaRelacional[];
+}
+
+export interface CompetenciaRelacional {
+  id: string;
+  descripcion: string;
+  tipo: 'genérica' | 'específica' | string;
+}
+
+export interface PerfilRelacional {
+  idPuesto?: string;
+  educacionFormal: string;
+  experienciaRequerida: string;
+  competencias?: CompetenciaRelacional[];
+}
+
+export interface ResponsabilidadRelacional {
+  idPuesto?: string;
+  manejoPersonal?: string | null;
+  equipoTrabajo?: string | null;
+  manejoInformacion?: string | null;
+}
+
+export interface CondicionTrabajoRelacional {
+  id: string;
+  idPuesto?: string;
+  descripcion: string;
+}
+
+export interface RiesgoPuestoRelacional {
+  id: string;
+  idPuesto?: string;
+  tipoRiesgo: string;
+  motivo: string;
+  consecuencia: string;
+}
+
+export interface RelacionPuestoRelacional {
+  id: string;
+  idPuesto?: string;
+  tipo: 'interna' | 'externa' | string;
+  puestoOInstitucion: string;
+  unidad?: string | null;
+  proposito: string;
+}
+
+export interface EstandarDesempenoRelacional {
+  id: string;
+  idPuesto?: string;
+  descripcion: string;
+}
+
 export interface JobPosition {
+  id?: string;
   code: string;
   title: string;
   department: string;
@@ -140,6 +211,22 @@ export interface JobPosition {
     level: number;
     observedBehavior: string;
   }>;
+
+  // Extensiones relacionales del diseño del Word (12 tablas)
+  nPosiciones?: number;
+  proposito?: string;
+  idUnidad?: string | null;
+  unidad?: UnidadRelacional | null;
+  idPuestoSuperior?: string | null;
+  puestoSuperior?: { id?: string; code: string; title: string } | null;
+  puestosSubordinados?: Array<{ id?: string; code: string; title: string }>;
+  funciones?: FuncionRelacional[];
+  perfil?: PerfilRelacional | null;
+  responsabilidadFicha?: ResponsabilidadRelacional | null;
+  condicionesTrabajoLista?: CondicionTrabajoRelacional[];
+  riesgosPuesto?: RiesgoPuestoRelacional[];
+  relacionesPuesto?: RelacionPuestoRelacional[];
+  estandaresDesempeno?: EstandarDesempenoRelacional[];
 }
 
 export interface Candidate {

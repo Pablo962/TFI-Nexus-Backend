@@ -47,4 +47,20 @@ export class CreateJobDto {
   @IsOptional()
   @IsArray()
   softSkills?: any[];
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  nPosiciones?: number;
+
+  @ApiPropertyOptional({ example: 'Propósito del puesto de trabajo' })
+  @IsOptional()
+  proposito?: string;
+
+  @ApiPropertyOptional({ example: 'u-dir-info' })
+  @IsOptional()
+  idUnidad?: string;
+
+  @ApiPropertyOptional({ example: 'PUE-DIR-INFO-01' })
+  @IsOptional()
+  idPuestoSuperior?: string;
 }

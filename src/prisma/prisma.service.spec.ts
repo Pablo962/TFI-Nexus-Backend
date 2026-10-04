@@ -24,7 +24,16 @@ describe('PrismaService', () => {
     expect(service.candidate).toBeDefined();
     expect(service.jobPosition).toBeDefined();
     expect(service.evaluation).toBeDefined();
-    expect(service.learningTrack).toBeDefined();
-    expect(service.porterActivity).toBeDefined();
+    expect(service.unidad).toBeDefined();
+    expect(service.funcion).toBeDefined();
+    expect(service.tarea).toBeDefined();
+    expect(service.perfil).toBeDefined();
+    expect(service.competencia).toBeDefined();
+    expect(service.perfilCompetencia).toBeDefined();
+    expect(service.responsabilidad).toBeDefined();
+    expect(service.condicionTrabajo).toBeDefined();
+    expect(service.riesgoPuesto).toBeDefined();
+    expect(service.relacionPuesto).toBeDefined();
+    expect(service.estandarDesempeno).toBeDefined();
   });
 });

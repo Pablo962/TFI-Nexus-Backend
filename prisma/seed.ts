@@ -10,9 +10,9 @@ import {
   TALENT_PERSONS,
   CANDIDATES_DATA,
   INITIAL_USERS,
-  INITIAL_TRACKS,
   INITIAL_EVALUATIONS,
-  PORTER_ACTIVITIES,
+  UNIDADES_DATA,
+  COMPETENCIAS_DATA,
 } from '../src/data/seed-data.js';
 
 const connectionString = process.env.DATABASE_URL;
@@ -24,20 +24,59 @@ const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+const getJobId = (code: string) => {
+  const map: Record<string, string> = {
+    'PUE-2026-ARCH-03': 'pue-arch-03',
+    'PUE-2026-ENG-08': 'pue-eng-08',
+    'PUE-2026-SEC-01': 'pue-sec-01',
+    'PUE-2026-DAT-04': 'pue-dat-04',
+    'PUE-DIR-INFO-01': 'pue-dir-info-01',
+    'PUE-JEF-PROC-02': 'pue-jef-proc-02',
+    'PUE-DIG-PART-05': 'pue-dig-part-05',
+    'PUE-ESC-PART-06': 'pue-esc-part-06',
+    'PUE-REC-PART-07': 'pue-rec-part-07',
+    'PUE-PRG-ANAL-08': 'pue-prg-anal-08',
+    'PUE-TEC-SOP-09': 'pue-tec-sop-09',
+  };
+  return map[code] || code.toLowerCase().replace(/[^a-z0-9]/g, '-');
+};
+
 async function main() {
   console.log('🌱 Iniciando carga de datos iniciales en Supabase (TFI-NEXUS)...');
 
-  // 1. Job Positions (Perfiles de Puesto)
+  // 1. Unidades Organizacionales (12 Tablas - Word)
+  console.log('  -> Creando unidades organizacionales (Unidad)...');
+  for (const u of UNIDADES_DATA.filter((x) => !x.idUnidadSuperior)) {
+    await prisma.unidad.upsert({
+      where: { id: u.id },
+      update: { nombre: u.nombre, idUnidadSuperior: null },
+      create: { id: u.id, nombre: u.nombre, idUnidadSuperior: null },
+    });
+  }
+  for (const u of UNIDADES_DATA.filter((x) => x.idUnidadSuperior)) {
+    await prisma.unidad.upsert({
+      where: { id: u.id },
+      update: { nombre: u.nombre, idUnidadSuperior: u.idUnidadSuperior },
+      create: { id: u.id, nombre: u.nombre, idUnidadSuperior: u.idUnidadSuperior },
+    });
+  }
+  console.log(`     ✓ ${UNIDADES_DATA.length} unidades organizacionales cargadas.`);
+
+  // 2. Competencias (12 Tablas - Word)
+  console.log('  -> Creando catálogo de competencias (Competencia)...');
+  for (const c of COMPETENCIAS_DATA) {
+    await prisma.competencia.upsert({
+      where: { id: c.id },
+      update: { descripcion: c.descripcion, tipo: c.tipo },
+      create: { id: c.id, descripcion: c.descripcion, tipo: c.tipo },
+    });
+  }
+  console.log(`     ✓ ${COMPETENCIAS_DATA.length} competencias cargadas.`);
+
+  // 3. Job Positions (Perfiles de Puesto - Word y Nexus)
   console.log('  -> Creando perfiles de puesto (JobPosition)...');
   for (const job of JOB_POSITIONS) {
-    const id =
-      job.code === 'PUE-2026-ARCH-03'
-        ? 'pue-arch-03'
-        : job.code === 'PUE-2026-ENG-08'
-          ? 'pue-eng-08'
-          : job.code === 'PUE-2026-SEC-01'
-            ? 'pue-sec-01'
-            : 'pue-dat-04';
+    const id = getJobId(job.code);
 
     await prisma.jobPosition.upsert({
       where: { code: job.code },
@@ -52,6 +91,9 @@ async function main() {
         supervises: job.supervises,
         salaryBand: job.salaryBand,
         mission: job.mission,
+        proposito: job.proposito ?? job.mission,
+        nPosiciones: job.nPosiciones ?? 1,
+        idUnidad: job.idUnidad ?? null,
         purposeLink: job.purposeLink,
         internalRelations: job.internalRelations,
         externalRelations: job.externalRelations,
@@ -74,6 +116,9 @@ async function main() {
         supervises: job.supervises,
         salaryBand: job.salaryBand,
         mission: job.mission,
+        proposito: job.proposito ?? job.mission,
+        nPosiciones: job.nPosiciones ?? 1,
+        idUnidad: job.idUnidad ?? null,
         purposeLink: job.purposeLink,
         internalRelations: job.internalRelations,
         externalRelations: job.externalRelations,
@@ -85,7 +130,165 @@ async function main() {
       },
     });
   }
-  console.log(`     ✓ ${JOB_POSITIONS.length} perfiles de puesto cargados.`);
+
+  // Actualizar relaciones jerárquicas recursivas de Puesto Superior (Word)
+  for (const job of JOB_POSITIONS) {
+    if (job.idPuestoSuperior) {
+      const superiorId = getJobId(job.idPuestoSuperior);
+      await prisma.jobPosition.update({
+        where: { code: job.code },
+        data: { idPuestoSuperior: superiorId },
+      });
+    }
+  }
+
+  // 4. Tablas Normalizadas Hijas de Puesto (12 Tablas - Word)
+  console.log('  -> Cargando entidades relacionales del Word (Perfil, Funciones, Tareas, etc.)...');
+  for (const job of JOB_POSITIONS) {
+    const id = getJobId(job.code);
+
+    // Perfil y PerfilCompetencia (1:1 y N:M)
+    if (job.perfil) {
+      await prisma.perfil.upsert({
+        where: { idPuesto: id },
+        update: {
+          educacionFormal: job.perfil.educacionFormal,
+          experienciaRequerida: job.perfil.experienciaRequerida,
+        },
+        create: {
+          idPuesto: id,
+          educacionFormal: job.perfil.educacionFormal,
+          experienciaRequerida: job.perfil.experienciaRequerida,
+        },
+      });
+
+      if (job.perfil.competencias && job.perfil.competencias.length > 0) {
+        for (const comp of job.perfil.competencias) {
+          await prisma.perfilCompetencia.upsert({
+            where: {
+              idPuesto_idCompetencia: {
+                idPuesto: id,
+                idCompetencia: comp.id,
+              },
+            },
+            update: {},
+            create: {
+              idPuesto: id,
+              idCompetencia: comp.id,
+            },
+          });
+        }
+      }
+    }
+
+    // Responsabilidad (1:1)
+    if (job.responsabilidadFicha) {
+      await prisma.responsabilidad.upsert({
+        where: { idPuesto: id },
+        update: {
+          manejoPersonal: job.responsabilidadFicha.manejoPersonal ?? null,
+          equipoTrabajo: job.responsabilidadFicha.equipoTrabajo ?? null,
+          manejoInformacion: job.responsabilidadFicha.manejoInformacion ?? null,
+        },
+        create: {
+          idPuesto: id,
+          manejoPersonal: job.responsabilidadFicha.manejoPersonal ?? null,
+          equipoTrabajo: job.responsabilidadFicha.equipoTrabajo ?? null,
+          manejoInformacion: job.responsabilidadFicha.manejoInformacion ?? null,
+        },
+      });
+    }
+
+    // Condiciones de Trabajo (1:N)
+    if (job.condicionesTrabajoLista && job.condicionesTrabajoLista.length > 0) {
+      for (const cond of job.condicionesTrabajoLista) {
+        await prisma.condicionTrabajo.upsert({
+          where: { id: cond.id },
+          update: { descripcion: cond.descripcion, idPuesto: id },
+          create: { id: cond.id, descripcion: cond.descripcion, idPuesto: id },
+        });
+      }
+    }
+
+    // Riesgos de Puesto (1:N)
+    if (job.riesgosPuesto && job.riesgosPuesto.length > 0) {
+      for (const r of job.riesgosPuesto) {
+        await prisma.riesgoPuesto.upsert({
+          where: { id: r.id },
+          update: {
+            tipoRiesgo: r.tipoRiesgo,
+            motivo: r.motivo,
+            consecuencia: r.consecuencia,
+            idPuesto: id,
+          },
+          create: {
+            id: r.id,
+            tipoRiesgo: r.tipoRiesgo,
+            motivo: r.motivo,
+            consecuencia: r.consecuencia,
+            idPuesto: id,
+          },
+        });
+      }
+    }
+
+    // Relaciones de Puesto (1:N)
+    if (job.relacionesPuesto && job.relacionesPuesto.length > 0) {
+      for (const rel of job.relacionesPuesto) {
+        await prisma.relacionPuesto.upsert({
+          where: { id: rel.id },
+          update: {
+            tipo: rel.tipo,
+            puestoOInstitucion: rel.puestoOInstitucion,
+            unidad: rel.unidad ?? null,
+            proposito: rel.proposito,
+            idPuesto: id,
+          },
+          create: {
+            id: rel.id,
+            tipo: rel.tipo,
+            puestoOInstitucion: rel.puestoOInstitucion,
+            unidad: rel.unidad ?? null,
+            proposito: rel.proposito,
+            idPuesto: id,
+          },
+        });
+      }
+    }
+
+    // Estándares de Desempeño (1:N)
+    if (job.estandaresDesempeno && job.estandaresDesempeno.length > 0) {
+      for (const est of job.estandaresDesempeno) {
+        await prisma.estandarDesempeno.upsert({
+          where: { id: est.id },
+          update: { descripcion: est.descripcion, idPuesto: id },
+          create: { id: est.id, descripcion: est.descripcion, idPuesto: id },
+        });
+      }
+    }
+
+    // Funciones y Tareas (1:N y 1:N)
+    if (job.funciones && job.funciones.length > 0) {
+      for (const func of job.funciones) {
+        await prisma.funcion.upsert({
+          where: { id: func.id },
+          update: { descripcion: func.descripcion, idPuesto: id },
+          create: { id: func.id, descripcion: func.descripcion, idPuesto: id },
+        });
+
+        if (func.tareas && func.tareas.length > 0) {
+          for (const tar of func.tareas) {
+            await prisma.tarea.upsert({
+              where: { id: tar.id },
+              update: { descripcion: tar.descripcion, idFuncion: func.id },
+              create: { id: tar.id, descripcion: tar.descripcion, idFuncion: func.id },
+            });
+          }
+        }
+      }
+    }
+  }
+  console.log(`     ✓ ${JOB_POSITIONS.length} puestos y sus estructuras relacionales cargados.`);
 
   // 2. Employees (Colaboradores / Legajos)
   console.log('  -> Creando colaboradores (Employee)...');
@@ -217,6 +420,16 @@ async function main() {
   // 4. Evaluations (Evaluaciones 9-Box y Desempeño 360)
   console.log('  -> Creando evaluaciones de talento (Evaluation)...');
   for (const evalItem of INITIAL_EVALUATIONS) {
+    const jobPositionId =
+      evalItem.jobPositionId ||
+      (evalItem.employeeId === 'lucas'
+        ? 'pue-arch-03'
+        : evalItem.employeeId === 'sofia'
+          ? 'pue-eng-08'
+          : evalItem.employeeId === 'carlos'
+            ? 'pue-sec-01'
+            : 'pue-arch-03');
+
     await prisma.evaluation.upsert({
       where: { id: evalItem.id },
       update: {
@@ -236,6 +449,7 @@ async function main() {
         potentialScore: evalItem.potentialScore,
         performanceScore: evalItem.performanceScore,
         gapAnalysis: evalItem.gapAnalysis,
+        jobPositionId,
       },
       create: {
         id: evalItem.id,
@@ -255,10 +469,11 @@ async function main() {
         potentialScore: evalItem.potentialScore,
         performanceScore: evalItem.performanceScore,
         gapAnalysis: evalItem.gapAnalysis,
+        jobPositionId,
       },
     });
   }
-  console.log(`     ✓ ${INITIAL_EVALUATIONS.length} evaluaciones 9-Box cargadas.`);
+  console.log(`     ✓ ${INITIAL_EVALUATIONS.length} evaluaciones 9-Box cargadas vinculadas a puestos.`);
 
   // 5. Users (Usuarios con contraseña hasheada: Admin1234!)
   console.log('  -> Creando usuarios para inicio de sesión...');
@@ -284,82 +499,6 @@ async function main() {
     });
   }
   console.log(`     ✓ ${INITIAL_USERS.length} usuarios con roles RBAC creados (Contraseña: Admin1234!).`);
-
-  // 6. Learning Tracks (Capacitaciones)
-  console.log('  -> Creando rutas de aprendizaje (LearningTrack)...');
-  for (const track of INITIAL_TRACKS) {
-    await prisma.learningTrack.upsert({
-      where: { id: track.id },
-      update: {
-        title: track.title,
-        technicalTitle: track.technicalTitle ?? null,
-        category: track.category,
-        level: track.level,
-        hours: track.hours,
-        enrolledCount: track.enrolledCount,
-        completionRate: track.completionRate,
-        gapTarget: track.gapTarget,
-        provider: track.provider,
-        certification: track.certification,
-        description: track.description,
-        enrolledEmployees: (track.enrolledEmployees as any) ?? null,
-      },
-      create: {
-        id: track.id,
-        title: track.title,
-        technicalTitle: track.technicalTitle ?? null,
-        category: track.category,
-        level: track.level,
-        hours: track.hours,
-        enrolledCount: track.enrolledCount,
-        completionRate: track.completionRate,
-        gapTarget: track.gapTarget,
-        provider: track.provider,
-        certification: track.certification,
-        description: track.description,
-        enrolledEmployees: (track.enrolledEmployees as any) ?? null,
-      },
-    });
-  }
-  console.log(`     ✓ ${INITIAL_TRACKS.length} rutas de aprendizaje creadas.`);
-
-  // 7. Porter Activities (Cadena de Valor de Porter)
-  console.log('  -> Creando actividades de cadena de valor (PorterActivity)...');
-  for (const act of PORTER_ACTIVITIES) {
-    await prisma.porterActivity.upsert({
-      where: { id: act.id },
-      update: {
-        step: act.step,
-        name: act.name,
-        subname: act.subname,
-        layer: act.id <= 5 ? 'primary' : 'support',
-        coverage: act.coverage,
-        coverageStatus: act.coverageStatus,
-        headcount: act.headcount,
-        costEfficiency: act.costEfficiency,
-        strategicNotes: act.aiRecommendation || act.description || null,
-        rolesList: (act.rolesList as any) ?? null,
-        topTalent: (act.topTalent as any) ?? null,
-        skillsMatrix: (act.skillsMatrix as any) ?? null,
-      },
-      create: {
-        id: act.id,
-        step: act.step,
-        name: act.name,
-        subname: act.subname,
-        layer: act.id <= 5 ? 'primary' : 'support',
-        coverage: act.coverage,
-        coverageStatus: act.coverageStatus,
-        headcount: act.headcount,
-        costEfficiency: act.costEfficiency,
-        strategicNotes: act.aiRecommendation || act.description || null,
-        rolesList: (act.rolesList as any) ?? null,
-        topTalent: (act.topTalent as any) ?? null,
-        skillsMatrix: (act.skillsMatrix as any) ?? null,
-      },
-    });
-  }
-  console.log(`     ✓ ${PORTER_ACTIVITIES.length} eslabones de cadena de valor de Porter cargados.`);
 
   console.log('✅ Base de datos Supabase poblada con éxito.');
 }

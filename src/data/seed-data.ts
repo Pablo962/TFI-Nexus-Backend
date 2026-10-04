@@ -516,6 +516,73 @@ export const EMPLOYEES_DATA: EmployeeProfile[] = [
   },
 ];
 
+export const UNIDADES_DATA = [
+  {
+    id: 'u-dir-info',
+    nombre: 'Dirección de Informática',
+    idUnidadSuperior: null,
+  },
+  {
+    id: 'u-proc-part',
+    nombre: 'Unidad de Procesamiento de Partidas',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-rec-part',
+    nombre: 'Área de Recolección de Partidas',
+    idUnidadSuperior: 'u-proc-part',
+  },
+  {
+    id: 'u-des-app',
+    nombre: 'Unidad de Desarrollo de Aplicaciones',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-sop-tec',
+    nombre: 'Unidad de Soporte Técnico',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-infra',
+    nombre: 'Infraestructura & Plataforma Cloud',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-ing-cent',
+    nombre: 'Ingeniería Central de Sistemas',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-ciber',
+    nombre: 'Ciberseguridad & Gobernanza',
+    idUnidadSuperior: 'u-dir-info',
+  },
+  {
+    id: 'u-ia',
+    nombre: 'Inteligencia Artificial y Datos',
+    idUnidadSuperior: 'u-dir-info',
+  },
+];
+
+export const COMPETENCIAS_DATA = [
+  { id: 'comp-trab-equipo', descripcion: 'Trabajo en equipo y colaboración multidisciplinaria', tipo: 'genérica' },
+  { id: 'comp-liderazgo', descripcion: 'Liderazgo técnico y gestión de equipos', tipo: 'genérica' },
+  { id: 'comp-analisis', descripcion: 'Capacidad de análisis de sistemas y resolución metódica', tipo: 'genérica' },
+  { id: 'comp-planificacion', descripcion: 'Planificación, organización y orientación a resultados', tipo: 'genérica' },
+  { id: 'comp-comunicacion', descripcion: 'Comunicación técnica y asertiva', tipo: 'genérica' },
+  { id: 'comp-innovacion', descripcion: 'Innovación, investigación y mejora continua de procesos', tipo: 'genérica' },
+  { id: 'comp-toma-decisiones', descripcion: 'Toma de decisiones bajo presión y criticidad', tipo: 'genérica' },
+  { id: 'comp-db-relacional', descripcion: 'Dominio de bases de datos relacionales y diseño normalizado', tipo: 'específica' },
+  { id: 'comp-digitacion', descripcion: 'Digitación veloz y procesamiento alfanumérico con control de calidad', tipo: 'específica' },
+  { id: 'comp-normativa-reg', descripcion: 'Normativa de registros civiles y documentación oficial', tipo: 'específica' },
+  { id: 'comp-escaneo-alta', descripcion: 'Operación de escáneres industriales y preservación de folios', tipo: 'específica' },
+  { id: 'comp-desarrollo-soft', descripcion: 'Análisis, diseño y programación de aplicaciones backend y frontend', tipo: 'específica' },
+  { id: 'comp-soporte-hw', descripcion: 'Soporte técnico integral, diagnóstico y mantenimiento de hardware', tipo: 'específica' },
+  { id: 'comp-cloud-arch', descripcion: 'Arquitectura Cloud, microservicios y alta disponibilidad', tipo: 'específica' },
+  { id: 'comp-seguridad-iam', descripcion: 'Seguridad perimetral, gestión de accesos IAM y Zero Trust', tipo: 'específica' },
+  { id: 'comp-mlops', descripcion: 'Entrenamiento distribuido de modelos de IA y MLOps', tipo: 'específica' },
+];
+
 export const JOB_POSITIONS: JobPosition[] = [
   {
     code: 'PUE-2026-ARCH-03',
@@ -740,6 +807,562 @@ export const JOB_POSITIONS: JobPosition[] = [
     ],
     softSkills: [
       { name: 'Colaboración entre ciencia de datos e ingeniería', description: 'Puente empático entre matemáticos y programadores', level: 4, observedBehavior: 'Sincronía fluida' },
+    ],
+  },
+  {
+    code: 'PUE-DIR-INFO-01',
+    title: 'Director de Informática',
+    department: 'Dirección de Informática',
+    status: 'critical',
+    activeIncumbentsCount: 1,
+    complianceRate: 100,
+    isCalibrated: true,
+    division: 'Dirección de Informática',
+    reportsTo: 'Director Ejecutivo Institucional',
+    supervises: 'Jefaturas de Procesamiento, Desarrollo, Soporte e Infraestructura',
+    salaryBand: 'Banda Directiva / Nivel D1',
+    incumbents: [
+      { name: 'Ing. Roberto Albarracín', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Brindar apoyo técnico a las demás unidades con oportunidad, calidad y confiabilidad, dirigiendo las políticas y estrategias informáticas.',
+    proposito: 'Brindar apoyo técnico a las demás unidades con oportunidad, calidad y confiabilidad, dirigiendo las políticas y estrategias informáticas.',
+    nPosiciones: 1,
+    idUnidad: 'u-dir-info',
+    idPuestoSuperior: null,
+    purposeLink: 'Garantiza la modernización tecnológica y la seguridad de la información institucional.',
+    internalRelations: 'Dirección General, Jefes de Unidad, Asesoría Jurídica.',
+    externalRelations: 'Tribunal Supremo Electoral, Ministerios, Proveedores de Tecnología.',
+    formalAuthority: 'Aprobación del Plan Estratégico de TI y firma de dictámenes técnicos.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Planificación Estratégica de TI', description: 'Formular y dirigir las políticas informáticas institucionales.', standard: 'Plan Anual cumplido al 100%' },
+      { number: 'Resp. 02', title: 'Continuidad Operativa', description: 'Garantizar el soporte oportuno a todas las unidades.', standard: 'Disponibilidad > 99.5%' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones normales de oficina en un 80% y 20% fuera de la institución.',
+      tools: 'Estación de trabajo corporativa, firma digital, acceso a servidores centrales.',
+      mobility: 'Reuniones interinstitucionales y auditorías en delegaciones.',
+    },
+    techSkills: [
+      { name: 'Dominio de bases de datos relacionales', description: 'Gestión y auditoría de repositorios de datos institucionales', level: 5, observedBehavior: 'Auditoría integral' },
+      { name: 'Arquitectura Cloud y Alta Disponibilidad', description: 'Estrategia y resiliencia de la plataforma tecnológica', level: 5, observedBehavior: 'Diseño estratégico' },
+    ],
+    softSkills: [
+      { name: 'Liderazgo técnico y de gestión', description: 'Conducción de equipos multidisciplinarios', level: 5, observedBehavior: 'Liderazgo visionario' },
+      { name: 'Toma de decisiones', description: 'Resolución de problemas críticos de servicio', level: 5, observedBehavior: 'Decisiones ágiles' },
+    ],
+    perfil: {
+      educacionFormal: 'Graduado Universitario en Ingeniería de Sistemas, Licenciatura en Informática o afín.',
+      experienciaRequerida: '5 años en cargos de dirección o gestión de áreas de Tecnologías de la Información.',
+      competencias: [
+        { id: 'comp-liderazgo', descripcion: 'Liderazgo técnico y gestión de equipos', tipo: 'genérica' },
+        { id: 'comp-toma-decisiones', descripcion: 'Toma de decisiones bajo presión y criticidad', tipo: 'genérica' },
+        { id: 'comp-db-relacional', descripcion: 'Dominio de bases de datos relacionales y diseño normalizado', tipo: 'específica' },
+        { id: 'comp-cloud-arch', descripcion: 'Arquitectura Cloud, microservicios y alta disponibilidad', tipo: 'específica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Supervisa 4 jefaturas operativas (Procesamiento, Desarrollo, Soporte, Infraestructura)',
+      equipoTrabajo: 'Equipos de cómputo, servidores institucionales y enlaces de comunicaciones',
+      manejoInformacion: 'Bases de datos centrales, padrón electoral y expedientes confidenciales',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-dir-1', descripcion: 'Condiciones normales de oficina en un 80%' },
+      { id: 'cond-dir-2', descripcion: 'Gestiones y reuniones interinstitucionales fuera de la institución en un 20%' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-dir-1', tipoRiesgo: 'Operativo', motivo: 'Toma de decisiones con información insuficiente o demoras críticas', consecuencia: 'Paralización de servicios institucionales y pérdida de confiabilidad pública' },
+      { id: 'riesgo-dir-2', tipoRiesgo: 'Regulatorio', motivo: 'Incumplimiento de normativas de protección de datos personales', consecuencia: 'Sanciones legales y auditorías negativas' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-dir-1', tipo: 'externa', puestoOInstitucion: 'Tribunal Supremo Electoral', unidad: '', proposito: 'Remisión de datos para el Padrón electoral' },
+      { id: 'rel-dir-2', tipo: 'interna', puestoOInstitucion: 'Directores de Área y Jefaturas', unidad: 'Dirección General y Unidades Técnicas', proposito: 'Lineamientos, políticas institucionales y rendición de cuentas' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-dir-1', descripcion: 'Plan operativo anual de tecnología cumplido al 100%' },
+      { id: 'est-dir-2', descripcion: 'Disponibilidad de servicios centrales y base de datos superior al 99.5%' },
+    ],
+    funciones: [
+      {
+        id: 'func-dir-1',
+        descripcion: 'Formulación y dirección de políticas informáticas institucionales',
+        tareas: [
+          { id: 'tar-dir-1', descripcion: 'Definir el Plan Estratégico de Tecnologías de la Información y Seguridad' },
+          { id: 'tar-dir-2', descripcion: 'Supervisar la ejecución presupuestaria de equipamiento y licencias' },
+        ],
+      },
+      {
+        id: 'func-dir-2',
+        descripcion: 'Coordinación y supervisión de las unidades operativas',
+        tareas: [
+          { id: 'tar-dir-3', descripcion: 'Evaluar periódicamente los reportes de avance de cada jefatura técnica' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-JEF-PROC-02',
+    title: 'Jefe de la Unidad de Procesamiento de Partidas',
+    department: 'Unidad de Procesamiento de Partidas',
+    status: 'critical',
+    activeIncumbentsCount: 1,
+    complianceRate: 98,
+    isCalibrated: true,
+    division: 'Unidad de Procesamiento de Partidas',
+    reportsTo: 'Director de Informática',
+    supervises: 'Supervisores, Digitadores y Escaneadores',
+    salaryBand: 'Banda Jefatura / Nivel J2',
+    incumbents: [
+      { name: 'Lic. Mariana Valdez', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Administrar, supervisar, monitorear y dar seguimiento a las actividades de actualización de la base de datos de partidas y registros.',
+    proposito: 'Administrar, supervisar, monitorear y dar seguimiento a las actividades de actualización de la base de datos de partidas y registros.',
+    nPosiciones: 1,
+    idUnidad: 'u-proc-part',
+    idPuestoSuperior: 'PUE-DIR-INFO-01',
+    purposeLink: 'Asegura la integridad y velocidad de actualización de las partidas civiles digitalizadas.',
+    internalRelations: 'Director de Informática, Coordinadores de Área, Supervisores.',
+    externalRelations: 'Registros Civiles Municipales.',
+    formalAuthority: 'Asignación de cargas de trabajo y validación final de lotes procesados.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Supervisión de Procesamiento', description: 'Monitorear la actualización diaria de la base de datos de partidas.', standard: 'Cero rezago en lotes diarios' },
+      { number: 'Resp. 02', title: 'Control de Calidad', description: 'Auditar la consistencia entre imágenes escaneadas y registros digitados.', standard: 'Precisión > 99%' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones normales de oficina en un 100%.',
+      tools: 'Estación de monitoreo, consolas de base de datos y software de gestión documental.',
+      mobility: 'Ocasional a centros de recolección departamentales.',
+    },
+    techSkills: [
+      { name: 'Dominio de bases de datos relacionales', description: 'Consultas de control de integridad y extracción de estadísticas', level: 4, observedBehavior: 'Manejo avanzado SQL' },
+      { name: 'Digitalización y procesamiento de documentos', description: 'Gestión del ciclo completo de digitalización', level: 5, observedBehavior: 'Control de procesos' },
+    ],
+    softSkills: [
+      { name: 'Planificación y organización', description: 'Gestión eficiente de cronogramas y turnos', level: 5, observedBehavior: 'Cumplimiento estricto' },
+      { name: 'Capacidad de análisis', description: 'Detección temprana de cuellos de botella', level: 4, observedBehavior: 'Resolución proactiva' },
+    ],
+    perfil: {
+      educacionFormal: 'Licenciatura en Computación, Ingeniería de Sistemas o carrera afín.',
+      experienciaRequerida: '3 años en coordinación de centros de procesamiento de datos o digitalización documental.',
+      competencias: [
+        { id: 'comp-planificacion', descripcion: 'Planificación, organización y orientación a resultados', tipo: 'genérica' },
+        { id: 'comp-db-relacional', descripcion: 'Dominio de bases de datos relacionales y diseño normalizado', tipo: 'específica' },
+        { id: 'comp-digitacion', descripcion: 'Digitación veloz y procesamiento alfanumérico con control de calidad', tipo: 'específica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Supervisa coordinadores de área, supervisores, digitadores y escaneadores',
+      equipoTrabajo: 'Red local de escaneo de alta producción y servidores de almacenamiento de imágenes',
+      manejoInformacion: 'Base de datos de partidas de nacimiento y defunción',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-jef-1', descripcion: 'Condiciones normales de oficina en un 100%' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-jef-1', tipoRiesgo: 'Operativo', motivo: 'Fallas en el control de calidad de lotes digitalizados', consecuencia: 'Inconsistencias en el registro civil del estado familiar' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-jef-1', tipo: 'interna', puestoOInstitucion: 'Director de Informática', unidad: 'Dirección de Informática', proposito: 'Informes de producción y requerimientos presupuestarios' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-jef-1', descripcion: 'Entrega de lotes de partidas procesadas dentro de los plazos estipulados' },
+      { id: 'est-jef-2', descripcion: 'Cero discrepancias no justificadas en auditorías de registro' },
+    ],
+    funciones: [
+      {
+        id: 'func-jef-1',
+        descripcion: 'Administración del flujo de procesamiento de partidas',
+        tareas: [
+          { id: 'tar-jef-1', descripcion: 'Planificar los turnos y cargas de trabajo de los operadores y digitadores' },
+          { id: 'tar-jef-2', descripcion: 'Verificar el cumplimiento de los estándares de calidad del escaneo' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-DIG-PART-05',
+    title: 'Digitador de Partidas',
+    department: 'Unidad de Procesamiento de Partidas',
+    status: 'operational',
+    activeIncumbentsCount: 8,
+    complianceRate: 95,
+    isCalibrated: true,
+    division: 'Unidad de Procesamiento de Partidas',
+    reportsTo: 'Jefe de la Unidad de Procesamiento de Partidas',
+    supervises: 'Ninguno',
+    salaryBand: 'Banda Operativa / Nivel O3',
+    incumbents: [
+      { name: 'Pablo Dibi', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Gabriel Marcial', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Digitar con exactitud y oportunidad la información de las imágenes de partidas de nacimiento y defunción en el sistema central.',
+    proposito: 'Digitar con exactitud y oportunidad la información de las imágenes de partidas de nacimiento y defunción en el sistema central.',
+    nPosiciones: 8,
+    idUnidad: 'u-proc-part',
+    idPuestoSuperior: 'PUE-JEF-PROC-02',
+    purposeLink: 'Permite transformar documentos escaneados en registros estructurados para el padrón y consultas ciudadanas.',
+    internalRelations: 'Supervisor de Procesamiento, Analistas de Calidad.',
+    externalRelations: 'Ninguna.',
+    formalAuthority: 'Registro de datos alfanuméricos y reporte de folios ilegibles.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Digitación de Partidas', description: 'Ingreso continuo de actas de nacimiento y defunción.', standard: '>= 120 partidas por jornada' },
+      { number: 'Resp. 02', title: 'Detección de Anomalías', description: 'Identificación de incongruencias o imágenes defectuosas.', standard: 'Reporte inmediato' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones normales de oficina en un 100%.',
+      tools: 'Computadora de escritorio con teclado ergonómico y doble monitor.',
+      mobility: 'No requerida.',
+    },
+    techSkills: [
+      { name: 'Digitación veloz y procesamiento alfanumérico', description: 'Velocidad de tipeo y transcripción precisa', level: 5, observedBehavior: 'Tipeo veloz > 60 PPM con 99% precisión' },
+      { name: 'Normativa de registros civiles', description: 'Conocimiento de campos obligatorios y formato de actas', level: 3, observedBehavior: 'Validación visual' },
+    ],
+    softSkills: [
+      { name: 'Atención al detalle y concentración', description: 'Capacidad de mantener precisión durante turnos continuos', level: 5, observedBehavior: 'Alta rigurosidad' },
+      { name: 'Trabajo en equipo', description: 'Coordinación fluida con escaneadores y supervisores', level: 4, observedBehavior: 'Colaboración activa' },
+    ],
+    perfil: {
+      educacionFormal: 'Bachillerato completo o estudios técnicos en informática.',
+      experienciaRequerida: '1 año en digitación y procesamiento de datos alfanuméricos.',
+      competencias: [
+        { id: 'comp-digitacion', descripcion: 'Digitación veloz y procesamiento alfanumérico con control de calidad', tipo: 'específica' },
+        { id: 'comp-trab-equipo', descripcion: 'Trabajo en equipo y colaboración multidisciplinaria', tipo: 'genérica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Ninguno',
+      equipoTrabajo: 'Terminal de trabajo, teclado ergonómico y lector óptico',
+      manejoInformacion: 'Microfilms, imágenes digitales y CDs de partidas de nacimiento y defunción',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-dig-1', descripcion: 'Condiciones normales de oficina en un 100%' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-dig-1', tipoRiesgo: 'Operativo / Ergonómico', motivo: 'Largas jornadas sentado sin el debido receso frente a pantalla', consecuencia: 'Enfermedades de la columna y fatiga visual severa' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-dig-1', tipo: 'interna', puestoOInstitucion: 'Supervisor de Procesamiento', unidad: 'Unidad de Procesamiento de Partidas', proposito: 'Recepción de lotes asignados y aclaración de dudas de legibilidad' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-dig-1', descripcion: 'Informe oportuno de las anomalías en la producción' },
+      { id: 'est-dig-2', descripcion: 'Rendimiento mínimo de 120 partidas digitadas por jornada con precisión superior al 98%' },
+    ],
+    funciones: [
+      {
+        id: 'func-dig-1',
+        descripcion: 'Recepción e ingreso de imágenes de partidas de nacimiento y defunción',
+        tareas: [
+          { id: 'tar-dig-1', descripcion: 'Informar sobre las anomalías encontradas en las imágenes' },
+          { id: 'tar-dig-2', descripcion: 'Ingresar los campos obligatorios respetando las reglas de validación' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-ESC-PART-06',
+    title: 'Escaneador de Partidas',
+    department: 'Unidad de Procesamiento de Partidas',
+    status: 'operational',
+    activeIncumbentsCount: 4,
+    complianceRate: 92,
+    isCalibrated: true,
+    division: 'Unidad de Procesamiento de Partidas',
+    reportsTo: 'Jefe de la Unidad de Procesamiento de Partidas',
+    supervises: 'Ninguno',
+    salaryBand: 'Banda Operativa / Nivel O2',
+    incumbents: [
+      { name: 'Facundo Nanterne Bachs', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Rita Ayelen Paz Gramajo', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Escanear correctamente partidas físicas de nacimiento y defunción cumpliendo estrictamente con las normas y manuales establecidos.',
+    proposito: 'Escanear correctamente partidas físicas de nacimiento y defunción cumpliendo estrictamente con las normas y manuales establecidos.',
+    nPosiciones: 4,
+    idUnidad: 'u-proc-part',
+    idPuestoSuperior: 'PUE-JEF-PROC-02',
+    purposeLink: 'Genera el acervo digital base que alimenta el sistema de digitación y resguardo histórico.',
+    internalRelations: 'Área de Recolección de Partidas, Digitadores.',
+    externalRelations: 'Ninguna.',
+    formalAuthority: 'Rechazo de libros que requieran restauración previa antes del escaneo.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Digitalización de Libros', description: 'Escaneo con alta resolución y preservación física de los folios.', standard: 'Sin deterioro documental' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones normales de oficina en un 100%, manipulación de libros históricos.',
+      tools: 'Escáneres industriales planetarios, guantes de conservación y software de captura.',
+      mobility: 'No requerida.',
+    },
+    techSkills: [
+      { name: 'Operación de escáneres industriales', description: 'Configuración de DPI, curvas de color y calibración de lentes', level: 4, observedBehavior: 'Manejo profesional' },
+    ],
+    softSkills: [
+      { name: 'Cuidado y prolijidad', description: 'Trato respetuoso y meticuloso de documentación antigua', level: 5, observedBehavior: 'Preservación rigurosa' },
+    ],
+    perfil: {
+      educacionFormal: 'Bachillerato general o técnico.',
+      experienciaRequerida: '6 meses en manejo de equipos de escaneo de alta producción o digitalización.',
+      competencias: [
+        { id: 'comp-escaneo-alta', descripcion: 'Operación de escáneres industriales y preservación de folios', tipo: 'específica' },
+        { id: 'comp-trab-equipo', descripcion: 'Trabajo en equipo y colaboración multidisciplinaria', tipo: 'genérica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Ninguno',
+      equipoTrabajo: 'Escáneres industriales, terminales de captura y kits de calibración',
+      manejoInformacion: 'Libros originales de partidas de nacimiento y defunción',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-esc-1', descripcion: 'Condiciones normales de oficina en un 100% con cuidado de folios históricos' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-esc-1', tipoRiesgo: 'Operativo', motivo: 'Manipulación descuidada de folios antiguos y frágiles', consecuencia: 'Deterioro o rotura de documentación histórica irreemplazable' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-esc-1', tipo: 'interna', puestoOInstitucion: 'Área de Recolección de Partidas', unidad: 'Área de Recolección de Partidas', proposito: 'Recepción y devolución de libros de registro civil' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-esc-1', descripcion: 'Resolución y contraste óptimo en cada imagen sin pérdida de datos' },
+      { id: 'est-esc-2', descripcion: 'Alineación y corte correcto de márgenes según especificación técnica' },
+    ],
+    funciones: [
+      {
+        id: 'func-esc-1',
+        descripcion: 'Digitalización de libros de registro',
+        tareas: [
+          { id: 'tar-esc-1', descripcion: 'Calibrar los escáneres según el tipo de papel y antigüedad del folio' },
+          { id: 'tar-esc-2', descripcion: 'Controlar la correlatividad de páginas escaneadas' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-REC-PART-07',
+    title: 'Recolector de Partidas',
+    department: 'Área de Recolección de Partidas',
+    status: 'operational',
+    activeIncumbentsCount: 3,
+    complianceRate: 96,
+    isCalibrated: true,
+    division: 'Unidad de Procesamiento de Partidas',
+    reportsTo: 'Jefe de la Unidad de Procesamiento de Partidas',
+    supervises: 'Ninguno',
+    salaryBand: 'Banda Operativa / Nivel O2',
+    incumbents: [
+      { name: 'Mauricio Agustin Soria', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Maia Jazmin Vera Morales', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Obtener información de nacimientos y defunciones en los Registros del Estado Familiar siguiendo rutas establecidas y verificando requisitos.',
+    proposito: 'Obtener información de nacimientos y defunciones en los Registros del Estado Familiar siguiendo rutas establecidas y verificando requisitos.',
+    nPosiciones: 3,
+    idUnidad: 'u-rec-part',
+    idPuestoSuperior: 'PUE-JEF-PROC-02',
+    purposeLink: 'Garantiza el traslado seguro y oportuno de las actas civiles desde las dependencias locales hacia la unidad de procesamiento.',
+    internalRelations: 'Jefe de Procesamiento, Escaneadores.',
+    externalRelations: 'Encargados de Registros del Estado Familiar en municipios.',
+    formalAuthority: 'Constatación y firma de actas de entrega y recepción documental.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Recolección en Rutas', description: 'Visita periódica a delegaciones para el retiro de partidas.', standard: 'Rutas 100% cubiertas' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones de campo y ruta en un 80%, 20% oficina.',
+      tools: 'Vehículo institucional, valijas seguras de transporte y precintos.',
+      mobility: 'Desplazamientos diarios por rutas departamentales.',
+    },
+    techSkills: [
+      { name: 'Normativa de registros civiles', description: 'Verificación de folios y sellos institucionales', level: 3, observedBehavior: 'Control documental' },
+    ],
+    softSkills: [
+      { name: 'Puntualidad y responsabilidad', description: 'Cumplimiento estricto de horarios y custodia de bienes', level: 5, observedBehavior: 'Custodia responsable' },
+    ],
+    perfil: {
+      educacionFormal: 'Bachillerato general con licencia de conducir vigente.',
+      experienciaRequerida: '1 año en tareas de logística, mensajería documentada o trabajo de campo.',
+      competencias: [
+        { id: 'comp-normativa-reg', descripcion: 'Normativa de registros civiles y documentación oficial', tipo: 'específica' },
+        { id: 'comp-planificacion', descripcion: 'Planificación, organización y orientación a resultados', tipo: 'genérica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Ninguno',
+      equipoTrabajo: 'Vehículo oficial asignado y valijas herméticas de transporte',
+      manejoInformacion: 'Actas y partidas originales en tránsito',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-rec-1', descripcion: 'Trabajo en ruta y delegaciones externas en un 80%' },
+      { id: 'cond-rec-2', descripcion: 'Oficina y entrega de lotes en un 20%' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-rec-1', tipoRiesgo: 'Operativo / Vial', motivo: 'Traslado continuo en vía pública y condiciones climáticas adversas', consecuencia: 'Riesgo de incidentes viales o extravío de folios en tránsito' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-rec-1', tipo: 'externa', puestoOInstitucion: 'Oficinas del Registro del Estado Familiar en municipios', unidad: '', proposito: 'Recepción y retiro de actas y libros de registro civil' },
+      { id: 'rel-rec-2', tipo: 'interna', puestoOInstitucion: 'Jefatura de Procesamiento', unidad: 'Unidad de Procesamiento de Partidas', proposito: 'Entrega de documentación para el proceso de digitalización' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-rec-1', descripcion: 'Cumplimiento del cronograma semanal de rutas al 100%' },
+      { id: 'est-rec-2', descripcion: 'Custodia íntegra y sin deterioros de la documentación entregada' },
+    ],
+    funciones: [
+      {
+        id: 'func-rec-1',
+        descripcion: 'Recolección programada en delegaciones',
+        tareas: [
+          { id: 'tar-rec-1', descripcion: 'Verificar firmas y sellos en las actas de entrega y recepción' },
+          { id: 'tar-rec-2', descripcion: 'Completar la hoja de ruta y control de tiempos de traslado' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-PRG-ANAL-08',
+    title: 'Programador Analista',
+    department: 'Unidad de Desarrollo de Aplicaciones',
+    status: 'critical',
+    activeIncumbentsCount: 5,
+    complianceRate: 91,
+    isCalibrated: true,
+    division: 'Unidad de Desarrollo de Aplicaciones',
+    reportsTo: 'Director de Informática',
+    supervises: 'Desarrolladores Junior y Pasantes',
+    salaryBand: 'Banda Profesional / Nivel P3',
+    incumbents: [
+      { name: 'Jasmin Ivone del Valle Berdu', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Pablo Ariel Mamani', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Analizar, diseñar y desarrollar aplicaciones informáticas eficientes y seguras para soportar los procesos institucionales.',
+    proposito: 'Analizar, diseñar y desarrollar aplicaciones informáticas eficientes y seguras para soportar los procesos institucionales.',
+    nPosiciones: 5,
+    idUnidad: 'u-des-app',
+    idPuestoSuperior: 'PUE-DIR-INFO-01',
+    purposeLink: 'Construye y mantiene las herramientas de software que automatizan la atención ciudadana y los flujos internos.',
+    internalRelations: 'Director de Informática, Jefaturas Usuarias, Mesa de Ayuda.',
+    externalRelations: 'Proveedores de software e integraciones de servicios.',
+    formalAuthority: 'Aprobación de cambios en repositorios de código y diseño de esquemas de BD.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Desarrollo de Software', description: 'Codificación y pruebas de módulos institucionales.', standard: 'Cobertura de pruebas > 85%' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones normales de oficina en un 100% o modalidad híbrida.',
+      tools: 'Computadora de alta gama, entornos de pruebas y acceso a repositorios Git.',
+      mobility: 'No requerida.',
+    },
+    techSkills: [
+      { name: 'Análisis, diseño y programación de aplicaciones', description: 'Dominio de arquitecturas cliente-servidor y APIs REST', level: 5, observedBehavior: 'Arquitectura limpia' },
+      { name: 'Dominio de bases de datos relacionales', description: 'Modelado relacional y optimización de consultas SQL', level: 4, observedBehavior: 'Consultas optimizadas' },
+    ],
+    softSkills: [
+      { name: 'Capacidad de análisis y síntesis', description: 'Traducción de requerimientos de negocio a código', level: 5, observedBehavior: 'Resolución metódica' },
+      { name: 'Innovación y mejora continua', description: 'Incorporación de buenas prácticas y patrones modernos', level: 4, observedBehavior: 'Propuestas de valor' },
+    ],
+    perfil: {
+      educacionFormal: 'Estudiante avanzado o graduado en Licenciatura en Sistemas, Ingeniería Informática o afín.',
+      experienciaRequerida: '2 años en desarrollo de software y consultas SQL avanzadas.',
+      competencias: [
+        { id: 'comp-desarrollo-soft', descripcion: 'Análisis, diseño y programación de aplicaciones backend y frontend', tipo: 'específica' },
+        { id: 'comp-db-relacional', descripcion: 'Dominio de bases de datos relacionales y diseño normalizado', tipo: 'específica' },
+        { id: 'comp-analisis', descripcion: 'Capacidad de análisis de sistemas y resolución metódica', tipo: 'genérica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Ninguno (orienta pasantes y desarrolladores junior)',
+      equipoTrabajo: 'Equipo de desarrollo, servidores de staging y herramientas de testing',
+      manejoInformacion: 'Código fuente institucional y esquemas de bases de datos de producción',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-prg-1', descripcion: 'Condiciones normales de oficina en un 100% con flexibilidad remota' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-prg-1', tipoRiesgo: 'Operativo', motivo: 'Errores en el diseño de los aplicativos o trabajo con requerimientos incompletos', consecuencia: 'Mal funcionamiento de sistemas en producción y fallas de seguridad' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-prg-1', tipo: 'interna', puestoOInstitucion: 'Jefes de Unidades usuarias', unidad: 'Áreas operativas', proposito: 'Relevamiento de requerimientos funcionales y pruebas de usuario' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-prg-1', descripcion: 'Entrega de código documentado y probado sin errores críticos en producción' },
+      { id: 'est-prg-2', descripcion: 'Cumplimiento de objetivos de sprint según la planificación técnica' },
+    ],
+    funciones: [
+      {
+        id: 'func-prg-1',
+        descripcion: 'Desarrollo y mantenimiento de aplicativos',
+        tareas: [
+          { id: 'tar-prg-1', descripcion: 'Programar módulos y servicios según la especificación técnica' },
+          { id: 'tar-prg-2', descripcion: 'Realizar pruebas unitarias y de integración de software' },
+        ],
+      },
+    ],
+  },
+  {
+    code: 'PUE-TEC-SOP-09',
+    title: 'Técnico de Soporte de Desarrollo y Mantenimiento',
+    department: 'Unidad de Soporte Técnico',
+    status: 'operational',
+    activeIncumbentsCount: 4,
+    complianceRate: 94,
+    isCalibrated: true,
+    division: 'Unidad de Soporte Técnico',
+    reportsTo: 'Director de Informática',
+    supervises: 'Ninguno',
+    salaryBand: 'Banda Técnica / Nivel T2',
+    incumbents: [
+      { name: 'Lic. Laura Benítez', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80' },
+    ],
+    mission: 'Brindar mantenimiento preventivo y correctivo con oportunidad y eficiencia a los equipos y sistemas de los usuarios.',
+    proposito: 'Brindar mantenimiento preventivo y correctivo con oportunidad y eficiencia a los equipos y sistemas de los usuarios.',
+    nPosiciones: 4,
+    idUnidad: 'u-sop-tec',
+    idPuestoSuperior: 'PUE-DIR-INFO-01',
+    purposeLink: 'Mantiene operativa la infraestructura física y lógica de los puestos de trabajo en toda la institución.',
+    internalRelations: 'Todas las unidades y empleados de la institución.',
+    externalRelations: 'Servicios técnicos oficiales de hardware.',
+    formalAuthority: 'Retiro de equipos para mantenimiento o sustitución temporal.',
+    responsibilities: [
+      { number: 'Resp. 01', title: 'Atención de Tickets', description: 'Diagnóstico y resolución de incidentes de hardware y software.', standard: 'Resolución < 2 horas' },
+    ],
+    workingConditions: {
+      modality: 'Condiciones de oficina y laboratorio técnico en un 100%.',
+      tools: 'Instrumentos de medición, bancos de prueba y repuestos de hardware.',
+      mobility: 'Desplazamientos internos por las distintas dependencias.',
+    },
+    techSkills: [
+      { name: 'Soporte técnico y mantenimiento de hardware', description: 'Diagnóstico y reparación de componentes electrónicos y redes', level: 4, observedBehavior: 'Diagnóstico certero' },
+    ],
+    softSkills: [
+      { name: 'Comunicación técnica y asertiva', description: 'Trato empático y pedagógico con usuarios no técnicos', level: 5, observedBehavior: 'Atención cálida' },
+    ],
+    perfil: {
+      educacionFormal: 'Técnico Superior en Soporte de Sistemas, Redes o carrera afín.',
+      experienciaRequerida: '1 año en mesa de ayuda y reparación de equipos de cómputo.',
+      competencias: [
+        { id: 'comp-soporte-hw', descripcion: 'Soporte técnico integral, diagnóstico y mantenimiento de hardware', tipo: 'específica' },
+        { id: 'comp-comunicacion', descripcion: 'Comunicación técnica y asertiva', tipo: 'genérica' },
+      ],
+    },
+    responsabilidadFicha: {
+      manejoPersonal: 'Ninguno',
+      equipoTrabajo: 'Herramientas de diagnóstico, repuestos de hardware y bancos de prueba',
+      manejoInformacion: 'Inventario de equipos de la institución y credenciales de soporte',
+    },
+    condicionesTrabajoLista: [
+      { id: 'cond-sop-1', descripcion: 'Condiciones de oficina y laboratorio técnico en un 100%' },
+    ],
+    riesgosPuesto: [
+      { id: 'riesgo-sop-1', tipoRiesgo: 'Operativo / Físico', motivo: 'Manipulación de fuentes de energía y cargas pesadas de equipos', consecuencia: 'Descargas eléctricas o lesiones lumbares por esfuerzo indebido' },
+    ],
+    relacionesPuesto: [
+      { id: 'rel-sop-1', tipo: 'interna', puestoOInstitucion: 'Todas las unidades de la institución', unidad: 'Todas las áreas', proposito: 'Asistencia técnica presencial y remota a usuarios' },
+    ],
+    estandaresDesempeno: [
+      { id: 'est-sop-1', descripcion: 'Resolución de tickets de soporte en menos de 2 horas para criticidad alta' },
+      { id: 'est-sop-2', descripcion: 'Mantenimiento preventivo semestral del 100% del parque informático' },
+    ],
+    funciones: [
+      {
+        id: 'func-sop-1',
+        descripcion: 'Atención de incidencias de usuarios',
+        tareas: [
+          { id: 'tar-sop-1', descripcion: 'Diagnosticar y reparar fallas de software base y hardware' },
+          { id: 'tar-sop-2', descripcion: 'Instalar y configurar puestos de trabajo con imágenes homologadas' },
+        ],
+      },
     ],
   },
 ];

@@ -9,38 +9,145 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 export class JobsService {
   private inMemoryJobs: JobPosition[] = [...JOB_POSITIONS];
 
+  private readonly jobInclude = {
+    unidad: {
+      include: {
+        unidadSuperior: true,
+        subunidades: true,
+      },
+    },
+    puestoSuperior: true,
+    puestosSubordinados: true,
+    perfil: {
+      include: {
+        perfilCompetencias: {
+          include: { competencia: true },
+        },
+      },
+    },
+    funciones: {
+      include: { tareas: true },
+    },
+    responsabilidadFicha: true,
+    condicionesTrabajo: true,
+    riesgosPuesto: true,
+    relacionesPuesto: true,
+    estandaresDesempeno: true,
+  };
+
   constructor(
     private readonly exportService: ExportService,
     @Optional() private readonly prisma?: PrismaService,
   ) {}
 
   private toJobPosition(j: any): JobPosition {
+    let responsibilities = j.responsibilities || [];
+    if ((!responsibilities || responsibilities.length === 0) && j.funciones?.length > 0) {
+      responsibilities = j.funciones.map((f: any, idx: number) => ({
+        number: `Func. 0${idx + 1}`,
+        title: f.descripcion.length > 35 ? f.descripcion.substring(0, 32) + '...' : f.descripcion,
+        description: f.descripcion,
+        standard: f.tareas?.map((t: any) => t.descripcion).join('; ') || 'Cumplimiento según procedimiento estándar',
+      }));
+    }
+
+    let workingConditions = j.workingConditions;
+    if (!workingConditions && j.condicionesTrabajo?.length > 0) {
+      workingConditions = {
+        modality: j.condicionesTrabajo.map((c: any) => c.descripcion).join(' | '),
+        tools: j.responsabilidadFicha?.equipoTrabajo || 'Equipos y software institucional',
+        mobility: 'Según requerimiento del puesto',
+      };
+    }
+
+    let techSkills = j.techSkills || [];
+    let softSkills = j.softSkills || [];
+    if (j.perfil?.perfilCompetencias?.length > 0) {
+      const relSkills = j.perfil.perfilCompetencias.map((pc: any) => pc.competencia).filter(Boolean);
+      const specific = relSkills.filter((c: any) => c.tipo === 'específica');
+      const generic = relSkills.filter((c: any) => c.tipo === 'genérica');
+      if (techSkills.length === 0 && specific.length > 0) {
+        techSkills = specific.map((s: any) => ({
+          name: s.descripcion,
+          description: s.descripcion,
+          level: 4,
+          observedBehavior: 'Dominio operativo y aplicación rigurosa',
+        }));
+      }
+      if (softSkills.length === 0 && generic.length > 0) {
+        softSkills = generic.map((s: any) => ({
+          name: s.descripcion,
+          description: s.descripcion,
+          level: 4,
+          observedBehavior: 'Conducta demostrada en el desempeño',
+        }));
+      }
+    }
+
     return {
+      id: j.id,
       code: j.code,
       title: j.title,
-      department: j.department,
+      department: j.unidad?.nombre || j.department,
       status: j.status,
-      activeIncumbentsCount: j.activeIncumbentsCount,
-      complianceRate: j.complianceRate,
+      activeIncumbentsCount: j.activeIncumbentsCount ?? j.nPosiciones ?? 1,
+      complianceRate: j.complianceRate ?? 100,
       isCalibrated: true,
-      division: j.division,
-      reportsTo: j.reportsTo,
-      supervises: j.supervises,
-      salaryBand: j.salaryBand,
+      division: j.division || j.unidad?.nombre || 'Dirección de Informática',
+      reportsTo: j.puestoSuperior?.title || j.reportsTo || 'Dirección General',
+      supervises: j.supervises || (j.puestosSubordinados?.map((s: any) => s.title).join(', ') || 'Sin supervisión directa'),
+      salaryBand: j.salaryBand || 'Banda Salarial Oficial',
       incumbents: j.incumbents || [],
-      mission: j.mission,
-      purposeLink: j.purposeLink || 'Impacto directo en la continuidad operativa de la plataforma.',
-      internalRelations: j.internalRelations || 'Comité de Arquitectura, Equipos de Producto.',
-      externalRelations: j.externalRelations || 'Proveedores de Nube (AWS, GCP).',
-      formalAuthority: j.formalAuthority || 'Aprobación de RFCs de Arquitectura.',
-      responsibilities: j.responsibilities || [],
-      workingConditions: j.workingConditions || {
-        modality: 'Remoto 100% con guardias rotativas',
-        tools: 'MacBook Pro M3 Max, acceso root a clusters',
+      mission: j.proposito || j.mission,
+      purposeLink: j.purposeLink || 'Impacto directo en la continuidad operativa de la institución.',
+      internalRelations: j.internalRelations || j.relacionesPuesto?.filter((r: any) => r.tipo === 'interna').map((r: any) => `${r.puestoOInstitucion} (${r.proposito})`).join('; ') || 'Coordinación interna de área',
+      externalRelations: j.externalRelations || j.relacionesPuesto?.filter((r: any) => r.tipo === 'externa').map((r: any) => `${r.puestoOInstitucion} (${r.proposito})`).join('; ') || 'Organismos externos vinculados',
+      formalAuthority: j.formalAuthority || 'Atribuciones conferidas por manual de funciones.',
+      responsibilities,
+      workingConditions: workingConditions || {
+        modality: 'Condiciones normales de oficina en un 100%',
+        tools: 'Terminal de trabajo y sistemas institucionales',
         mobility: 'No requerida',
       },
-      techSkills: j.techSkills || [],
-      softSkills: j.softSkills || [],
+      techSkills,
+      softSkills,
+
+      // Extensiones relacionales completas del Word (12 tablas)
+      nPosiciones: j.nPosiciones,
+      proposito: j.proposito,
+      idUnidad: j.idUnidad,
+      unidad: j.unidad ? {
+        id: j.unidad.id,
+        nombre: j.unidad.nombre,
+        idUnidadSuperior: j.unidad.idUnidadSuperior,
+        unidadSuperior: j.unidad.unidadSuperior ? { id: j.unidad.unidadSuperior.id, nombre: j.unidad.unidadSuperior.nombre } : null,
+        subunidades: j.unidad.subunidades?.map((s: any) => ({ id: s.id, nombre: s.nombre })) || [],
+      } : null,
+      idPuestoSuperior: j.idPuestoSuperior,
+      puestoSuperior: j.puestoSuperior ? { id: j.puestoSuperior.id, code: j.puestoSuperior.code, title: j.puestoSuperior.title } : null,
+      puestosSubordinados: j.puestosSubordinados?.map((s: any) => ({ id: s.id, code: s.code, title: s.title })) || [],
+      funciones: j.funciones?.map((f: any) => ({
+        id: f.id,
+        idPuesto: f.idPuesto,
+        descripcion: f.descripcion,
+        tareas: f.tareas?.map((t: any) => ({ id: t.id, idFuncion: t.idFuncion, descripcion: t.descripcion })) || [],
+      })) || [],
+      perfil: j.perfil ? {
+        idPuesto: j.perfil.idPuesto,
+        educacionFormal: j.perfil.educacionFormal,
+        experienciaRequerida: j.perfil.experienciaRequerida,
+        competencias: j.perfil.perfilCompetencias?.map((pc: any) => pc.competencia).filter(Boolean) || [],
+      } : null,
+      responsabilidadFicha: j.responsabilidadFicha ? {
+        idPuesto: j.responsabilidadFicha.idPuesto,
+        manejoPersonal: j.responsabilidadFicha.manejoPersonal,
+        equipoTrabajo: j.responsabilidadFicha.equipoTrabajo,
+        manejoInformacion: j.responsabilidadFicha.manejoInformacion,
+      } : null,
+      condicionesTrabajoLista: j.condicionesTrabajo?.map((c: any) => ({ id: c.id, idPuesto: c.idPuesto, descripcion: c.descripcion })) || [],
+      riesgosPuesto: j.riesgosPuesto?.map((r: any) => ({ id: r.id, idPuesto: r.idPuesto, tipoRiesgo: r.tipoRiesgo, motivo: r.motivo, consecuencia: r.consecuencia })) || [],
+      relacionesPuesto: j.relacionesPuesto?.map((r: any) => ({ id: r.id, idPuesto: r.idPuesto, tipo: r.tipo, puestoOInstitucion: r.puestoOInstitucion, unidad: r.unidad, proposito: r.proposito })) || [],
+      estandaresDesempeno: j.estandaresDesempeno?.map((e: any) => ({ id: e.id, idPuesto: e.idPuesto, descripcion: e.descripcion })) || [],
     };
   }
 
@@ -62,7 +169,11 @@ export class JobsService {
           ];
         }
 
-        const jobs = await this.prisma.jobPosition.findMany({ where });
+        const jobs = await this.prisma.jobPosition.findMany({
+          where,
+          include: this.jobInclude,
+        });
+
         if (jobs.length > 0 || query?.search || query?.department || query?.onlyCritical) {
           return {
             total: jobs.length,
@@ -110,6 +221,7 @@ export class JobsService {
               { id: code },
             ],
           },
+          include: this.jobInclude,
         });
         if (job) {
           return this.toJobPosition(job);

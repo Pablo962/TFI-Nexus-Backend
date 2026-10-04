@@ -31,22 +31,6 @@ export class PorterService {
   }
 
   async findAll() {
-    if (this.prisma) {
-      try {
-        const activities = await this.prisma.porterActivity.findMany({
-          orderBy: { id: 'asc' },
-        });
-        if (activities.length > 0) {
-          return {
-            total: activities.length,
-            data: activities.map((a) => this.toPorterActivity(a)),
-          };
-        }
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     return {
       total: this.inMemoryActivities.length,
       data: this.inMemoryActivities,
@@ -54,19 +38,6 @@ export class PorterService {
   }
 
   async findOne(id: number) {
-    if (this.prisma) {
-      try {
-        const activity = await this.prisma.porterActivity.findUnique({
-          where: { id: Number(id) },
-        });
-        if (activity) {
-          return this.toPorterActivity(activity);
-        }
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     const activity = this.inMemoryActivities.find((a) => a.id === Number(id));
     if (!activity) {
       throw new NotFoundException(`Actividad de Porter con ID ${id} no encontrada`);
