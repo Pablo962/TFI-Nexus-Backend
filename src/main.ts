@@ -64,9 +64,9 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 4000;
-  await app.listen(port);
-  console.log(`🚀 NEXUS API REST ejecutándose en: http://localhost:${port}/api/v1`);
-  console.log(`📑 Swagger UI disponible en:        http://localhost:${port}/api/docs`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 NEXUS API REST ejecutándose en el puerto: ${port}`);
+  console.log(`📑 Swagger UI disponible en: /api/docs`);
 }
 
 await bootstrap();
