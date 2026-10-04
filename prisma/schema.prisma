@@ -6,469 +6,89 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  ADMIN_HR
-  MANAGER
-  EMPLOYEE
-  RECRUITER
-}
-
-enum RiskStatus {
-  optimal
-  moderate
-  spof
-}
-
-enum JobStatus {
-  critical
-  operational
-}
-
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         Role     @default(EMPLOYEE)
-  employeeId   String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("users")
-}
-
-model JobPosition {
-  id                    String      @id @default(uuid())
-  code                  String      @unique
-  title                 String
-  department            String
-  status                JobStatus   @default(operational)
-  activeIncumbentsCount Int         @default(1)
-  complianceRate        Float       @default(100)
-  division              String
-  reportsTo             String
-  supervises            String
-  salaryBand            String
-  mission               String
-  purposeLink           String?
-  internalRelations     String?
-  externalRelations     String?
-  formalAuthority       String?
-  workingConditions     Json?
-  responsibilities      Json?
-  techSkills            Json?
-  softSkills            Json?
-
-  // Campos específicos del Modelo del Word (Gestión de Capital Humano)
-  nPosiciones           Int         @default(1) @map("n_posiciones")
-  proposito             String?     @map("proposito")
-  idUnidad              String?     @map("id_unidad")
-  unidad                Unidad?     @relation(fields: [idUnidad], references: [id], onDelete: SetNull)
-  idPuestoSuperior      String?     @map("id_puesto_superior")
-  puestoSuperior        JobPosition?  @relation("JerarquiaPuestos", fields: [idPuestoSuperior], references: [id], onDelete: SetNull)
-  puestosSubordinados   JobPosition[] @relation("JerarquiaPuestos")
-
-  // Relaciones del Modelo Relacional del Word (12 tablas)
-  perfil                Perfil?
-  responsabilidadFicha  Responsabilidad?
-  funciones             Funcion[]
-  condicionesTrabajo    CondicionTrabajo[]
-  riesgosPuesto         RiesgoPuesto[]
-  relacionesPuesto      RelacionPuesto[]
-  estandaresDesempeno   EstandarDesempeno[]
-
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-
-  employees             Employee[]
-  candidates            Candidate[]
-  evaluations           Evaluation[]
-  vacantes              Vacante[]
-
-  @@map("job_positions")
-}
-
-model Employee {
-  id                  String       @id
-  empId               String       @unique
-  name                String
-  email               String       @unique
-  phone               String?
-  role                String
-  area                String
-  tenure              String
-  contract            String
-  location            String
-  salaryBand          String
-  percentile          String
-  avatar              String
-  supervisorName      String
-  supervisorRole      String
-  supervisorAvatar    String
-  roleMatch           Float        @default(90)
-  gFactor             Float        @default(1.0)
-  status              String       @default("Óptimo")
-  badge               String       @default("Referente Técnico")
-  criticality         Float        @default(8.5)
-  riskStatus          RiskStatus   @default(optimal)
-  spectrumSkills      Json?
-  hardSkills          Json?
-  softSkills          Json?
-  recommendedTraining Json?
-  reviews             Json?
-  projects            Json?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-
-  jobPositionId       String?
-  jobPosition         JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
-  evaluations         Evaluation[]
-
-  @@map("employees")
-}
-
-model Candidate {
-  id            String       @id @default(uuid())
-  rank          Int          @default(1)
-  name          String
-  title         String
-  experience    String
-  avatar        String
-  matchScore    Int          @default(80)
-  matchLabel    String
-  techScore     Float
-  softScore     Float
-  strengths     String
-  stage         String       @default("Revisión Inicial")
-  notes         String?
-  radarScores   Json?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  jobPositionId String?
-  jobPosition   JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
-
-  @@map("candidatos")
-}
-
-model Evaluation {
-  id               String    @id @default(uuid())
-  cycle            String    @default("Ciclo Anual 2026")
-  employeeName     String
-  role             String
-  area             String
-  avatar           String
-  evaluator        String
-  selfScore        Float
-  managerScore     Float
-  peersScore       Float
-  calibratedScore  Float
-  box9             String
-  status           String    @default("Calibrado")
-  potentialScore   Float
-  performanceScore Float
-  gapAnalysis      String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  employeeId       String
-  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  jobPositionId    String?   @map("id_puesto")
-  jobPosition      JobPosition? @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
-
-  @@map("evaluations")
-}
-
 // =======================================================================
-// MODELO RELACIONAL DE DESCRIPCIÓN Y ESPECIFICACIÓN DE PUESTOS (WORD)
-// =======================================================================
-
-model Unidad {
-  id               String       @id @default(uuid()) @map("id_unidad")
-  nombre           String       @map("nombre")
-  idUnidadSuperior String?      @map("id_unidad_superior")
-  unidadSuperior   Unidad?      @relation("JerarquiaUnidades", fields: [idUnidadSuperior], references: [id], onDelete: SetNull)
-  subunidades      Unidad[]     @relation("JerarquiaUnidades")
-  puestos          JobPosition[]
-
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  @@map("unidades")
-}
-
-model Funcion {
-  id          String      @id @default(uuid()) @map("id_funcion")
-  idPuesto    String      @map("id_puesto")
-  puesto      JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  descripcion String      @map("descripcion")
-  tareas      Tarea[]
-
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@map("funciones")
-}
-
-model Tarea {
-  id          String   @id @default(uuid()) @map("id_tarea")
-  idFuncion   String   @map("id_funcion")
-  funcion     Funcion  @relation(fields: [idFuncion], references: [id], onDelete: Cascade)
-  descripcion String   @map("descripcion")
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("tareas")
-}
-
-model Perfil {
-  idPuesto             String              @id @map("id_puesto")
-  puesto               JobPosition         @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  educacionFormal      String              @map("educacion_formal")
-  experienciaRequerida String              @map("experiencia_requerida")
-  perfilCompetencias   PerfilCompetencia[]
-
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-
-  @@map("perfiles")
-}
-
-model Competencia {
-  id                 String              @id @default(uuid()) @map("id_competencia")
-  descripcion        String              @map("descripcion")
-  tipo               String              @map("tipo") // "genérica" o "específica"
-  perfilCompetencias PerfilCompetencia[]
-
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-
-  @@map("competencias")
-}
-
-model PerfilCompetencia {
-  idPuesto      String      @map("id_puesto")
-  idCompetencia String      @map("id_competencia")
-  perfil        Perfil      @relation(fields: [idPuesto], references: [idPuesto], onDelete: Cascade)
-  competencia   Competencia @relation(fields: [idCompetencia], references: [id], onDelete: Cascade)
-
-  @@id([idPuesto, idCompetencia])
-  @@map("perfil_competencias")
-}
-
-model Responsabilidad {
-  idPuesto          String      @id @map("id_puesto")
-  puesto            JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  manejoPersonal    String?     @map("manejo_personal")
-  equipoTrabajo     String?     @map("equipo_trabajo")
-  manejoInformacion String?     @map("manejo_informacion")
-
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-
-  @@map("responsabilidades")
-}
-
-model CondicionTrabajo {
-  id          String      @id @default(uuid()) @map("id_condicion")
-  idPuesto    String      @map("id_puesto")
-  puesto      JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  descripcion String      @map("descripcion")
-
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@map("condiciones_trabajo")
-}
-
-model RiesgoPuesto {
-  id           String      @id @default(uuid()) @map("id_riesgo")
-  idPuesto     String      @map("id_puesto")
-  puesto       JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  tipoRiesgo   String      @map("tipo_riesgo")
-  motivo       String      @map("motivo")
-  consecuencia String      @map("consecuencia")
-
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  @@map("riesgos_puesto")
-}
-
-model RelacionPuesto {
-  id                 String      @id @default(uuid()) @map("id_relacion")
-  idPuesto           String      @map("id_puesto")
-  puesto             JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  tipo               String      @map("tipo") // "interna" o "externa"
-  puestoOInstitucion String      @map("puesto_o_institucion")
-  unidad             String?     @map("unidad")
-  proposito          String      @map("proposito")
-
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-
-  @@map("relaciones_puesto")
-}
-
-model EstandarDesempeno {
-  id          String      @id @default(uuid()) @map("id_estandar")
-  idPuesto    String      @map("id_puesto")
-  puesto      JobPosition @relation(fields: [idPuesto], references: [id], onDelete: Cascade)
-  descripcion String      @map("descripcion")
-
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@map("estandares_desempeno")
-}
-
-// =======================================================================
-// MODELOS RESTAURADOS: CAPACITACIÓN Y CADENA DE VALOR
-// =======================================================================
-
-model LearningTrack {
-  id                String   @id
-  title             String
-  technicalTitle    String?
-  category          String
-  level             String
-  hours             Int
-  enrolledCount     Int      @default(0)
-  completionRate    Float    @default(0)
-  gapTarget         String
-  provider          String
-  certification     String
-  description       String
-  enrolledEmployees Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  @@map("learning_tracks")
-}
-
-model PorterActivity {
-  id               Int      @id
-  step             String
-  name             String
-  subname          String
-  layer            String   @default("primary")
-  coverage         Float    @default(90)
-  coverageStatus   String   @default("optimal")
-  headcount        Int      @default(10)
-  costEfficiency   String   @default("95% Óptimo")
-  strategicNotes   String?
-  rolesList        Json?
-  topTalent        Json?
-  skillsMatrix     Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@map("porter_activities")
-}
-
-// =======================================================================
-// MODELO RELACIONAL DE RECLUTAMIENTO Y SELECCIÓN (MATCHING DE HABILIDADES)
+// MODELO RELACIONAL DE RECLUTAMIENTO Y SELECCIÓN (6 TABLAS DE SUPABASE)
 // =======================================================================
 
 model Vacante {
   id                 Int                 @id @default(autoincrement()) @map("identificador")
-  idPuesto           String?             @map("id_puesto")
-  puesto             JobPosition?        @relation(fields: [idPuesto], references: [id], onDelete: SetNull)
-  titulo             String              @map("titulo")
-  requisitos         String?             @map("requisitos")
-  tipo               String?             @map("tipo")
-  area               String?             @map("area")
-  beneficios         String?             @map("beneficios")
-  estado             String              @default("Abierta") @map("estado")
+  titulo             String              @map("titulo") @db.VarChar
+  requisitos         String?             @map("requisitos") @db.VarChar
+  tipo               String?             @map("tipo") @db.VarChar
 
   postulaciones      Postulacion[]
   vacanteHabilidades VacanteHabilidad[]
 
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-
   @@map("vacante")
 }
 
-model Postulante {
+model Perfil {
   id              Int                 @id @default(autoincrement()) @map("identificador")
-  nombre          String              @map("nombre")
-  apellido        String              @map("apellido")
-  dni             String?             @map("dni")
-  fechaNacimiento DateTime?           @map("fecha_nacimiento")
-  direccion       String?             @map("direccion")
-  telefono        String?             @map("telefono")
-  correo          String              @map("correo")
-  carrera         String?             @map("carrera")
-  anioCursado     String?             @map("anio_cursado")
-  legajo          String?             @map("legajo")
-  descripcion     String?             @map("descripcion")
-  area            String?             @map("area")
-  requisitos      String?             @map("requisitos")
-  beneficios      String?             @map("beneficios")
-  perfilAsignado  String?             @map("perfil_asignado")
-  justificacion   String?             @map("justificacion")
+  nombre          String              @map("nombre") @db.VarChar
+  apellido        String              @map("apellido") @db.VarChar
+  dni             String?             @map("dni") @db.VarChar
+  fechaNacimiento DateTime?           @map("fecha_nacimiento") @db.Date
+  direccion       String?             @map("direccion") @db.VarChar
+  telefono        String?             @map("telefono") @db.VarChar
+  correo          String              @map("correo") @db.VarChar
+  carrera         String?             @map("carrera") @db.VarChar
+  anioCursado     String?             @map("anio_cursado") @db.VarChar
+  legajo          String?             @map("legajo") @db.VarChar
+  descripcion     String?             @map("descripcion") @db.VarChar
+  area            String?             @map("area") @db.VarChar
+  requisitos      String?             @map("requisitos") @db.VarChar
+  beneficios      String?             @map("beneficios") @db.VarChar
+  perfilAsignado  String?             @map("perfil_asignado") @db.VarChar
+  justificacion   String?             @map("justificacion") @db.VarChar
 
   postulaciones   Postulacion[]
   habilidades     PerfilHabilidad[]
-
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
 
   @@map("perfil")
 }
 
 model Habilidad {
   id                 Int                 @id @default(autoincrement()) @map("identificador")
-  nombre             String              @map("nombre")
-  tipo               String?             @map("tipo") // Técnica | Blanda
+  nombre             String              @map("nombre") @db.VarChar
+  tipo               String?             @map("tipo") @db.VarChar
 
   vacanteHabilidades VacanteHabilidad[]
   perfilHabilidades  PerfilHabilidad[]
-
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
 
   @@map("habilidad")
 }
 
 model Postulacion {
-  perfilId       Int        @map("perfil_id")
-  vacanteId      Int        @map("vacante_id")
-  ranking        Int?       @map("ranking")
-  justificacion  String?    @map("justificacion")
-  etapa          String     @default("Revisión Inicial") @map("etapa")
+  perfilId      Int     @map("perfil_id")
+  vacanteId     Int     @map("vacante_id")
+  ranking       Int?    @map("ranking")
+  justificacion String? @map("justificacion") @db.VarChar
 
-  postulante     Postulante @relation(fields: [perfilId], references: [id], onDelete: Cascade)
-  vacante        Vacante    @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
-
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  perfil        Perfil  @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  vacante       Vacante @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
 
   @@id([perfilId, vacanteId])
   @@map("postulacion")
 }
 
 model VacanteHabilidad {
-  vacanteId    Int       @map("vacante_id")
-  habilidadId  Int       @map("habilidad_id")
+  vacanteId   Int       @map("vacante_id")
+  habilidadId Int       @map("habilidad_id")
 
-  vacante      Vacante   @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
-  habilidad    Habilidad @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+  vacante     Vacante   @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
+  habilidad   Habilidad @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
 
   @@id([vacanteId, habilidadId])
   @@map("vacante_habilidad")
 }
 
 model PerfilHabilidad {
-  perfilId     Int        @map("perfil_id")
-  habilidadId  Int        @map("habilidad_id")
+  perfilId    Int       @map("perfil_id")
+  habilidadId Int       @map("habilidad_id")
 
-  postulante   Postulante @relation(fields: [perfilId], references: [id], onDelete: Cascade)
-  habilidad    Habilidad  @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+  perfil      Perfil    @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  habilidad   Habilidad @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
 
   @@id([perfilId, habilidadId])
   @@map("perfil_habilidad")
 }
-

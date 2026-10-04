@@ -17,28 +17,10 @@ describe('PrismaService', () => {
     expect(typeof service.$disconnect).toBe('function');
   });
 
-  it('debe contener los modelos del esquema de Prisma', () => {
+  it('debe contener los 6 modelos del esquema de Prisma para Reclutamiento', () => {
     service = new PrismaService();
-    expect(service.user).toBeDefined();
-    expect(service.employee).toBeDefined();
-    expect(service.candidate).toBeDefined();
-    expect(service.jobPosition).toBeDefined();
-    expect(service.evaluation).toBeDefined();
-    expect(service.unidad).toBeDefined();
-    expect(service.funcion).toBeDefined();
-    expect(service.tarea).toBeDefined();
-    expect(service.perfil).toBeDefined();
-    expect(service.competencia).toBeDefined();
-    expect(service.perfilCompetencia).toBeDefined();
-    expect(service.responsabilidad).toBeDefined();
-    expect(service.condicionTrabajo).toBeDefined();
-    expect(service.riesgoPuesto).toBeDefined();
-    expect(service.relacionPuesto).toBeDefined();
-    expect(service.estandarDesempeno).toBeDefined();
-    expect(service.learningTrack).toBeDefined();
-    expect(service.porterActivity).toBeDefined();
     expect(service.vacante).toBeDefined();
-    expect(service.postulante).toBeDefined();
+    expect(service.perfil).toBeDefined();
     expect(service.habilidad).toBeDefined();
     expect(service.postulacion).toBeDefined();
     expect(service.vacanteHabilidad).toBeDefined();

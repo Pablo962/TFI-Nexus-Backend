@@ -23,6 +23,30 @@ export class RecruitmentController {
     });
   }
 
+  @Get('vacantes')
+  @ApiOperation({ summary: 'Obtener lista de vacantes del modelo relacional de Supabase' })
+  async getVacantes() {
+    return this.recruitmentService.getVacantes();
+  }
+
+  @Get('perfiles')
+  @ApiOperation({ summary: 'Obtener perfiles/postulantes del modelo relacional de Supabase' })
+  async getPerfiles() {
+    return this.recruitmentService.getPerfiles();
+  }
+
+  @Get('habilidades')
+  @ApiOperation({ summary: 'Obtener habilidades del modelo relacional de Supabase' })
+  async getHabilidades() {
+    return this.recruitmentService.getHabilidades();
+  }
+
+  @Get('postulaciones')
+  @ApiOperation({ summary: 'Obtener postulaciones del modelo relacional de Supabase' })
+  async getPostulaciones() {
+    return this.recruitmentService.getPostulaciones();
+  }
+
   @Get('candidates/:id')
   @ApiOperation({ summary: 'Obtener detalle y radar de habilidades de un candidato' })
   async findOne(@Param('id') id: string) {

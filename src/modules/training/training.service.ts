@@ -1,34 +1,12 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { INITIAL_TRACKS } from '../../data/seed-data.js';
 import { EnrollDto } from './dto/enroll.dto.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
 export class TrainingService {
   private inMemoryTracks = [...INITIAL_TRACKS];
 
-  constructor(@Optional() private readonly prisma?: PrismaService) {}
-
   async findAll(query?: { category?: string }) {
-    if (this.prisma) {
-      try {
-        const where: any = {};
-        if (query?.category && query.category !== 'all') {
-          where.category = { contains: query.category, mode: 'insensitive' };
-        }
-
-        const tracks = await this.prisma.learningTrack.findMany({ where });
-        if (tracks.length > 0 || query?.category) {
-          return {
-            total: tracks.length,
-            data: tracks,
-          };
-        }
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     let result = [...this.inMemoryTracks];
     if (query?.category && query.category !== 'all') {
       result = result.filter((t) => t.category.toLowerCase().includes(query.category!.toLowerCase()));
@@ -40,19 +18,6 @@ export class TrainingService {
   }
 
   async findOne(id: string) {
-    if (this.prisma) {
-      try {
-        const track = await this.prisma.learningTrack.findUnique({
-          where: { id },
-        });
-        if (track) {
-          return track;
-        }
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     const track = this.inMemoryTracks.find((t) => t.id === id);
     if (!track) {
       throw new NotFoundException(`Curso con ID ${id} no encontrado`);

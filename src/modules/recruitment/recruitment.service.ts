@@ -39,20 +39,56 @@ export class RecruitmentService {
   async findAll(query?: { jobCode?: string; minMatch?: number }) {
     if (this.prisma) {
       try {
-        const where: any = {};
-        if (query?.minMatch) {
-          where.matchScore = { gte: query.minMatch };
-        }
-
-        const candidates = await this.prisma.candidate.findMany({
-          where,
-          orderBy: { matchScore: 'desc' },
+        const perfiles = await this.prisma.perfil.findMany({
+          include: {
+            habilidades: { include: { habilidad: true } },
+            postulaciones: { include: { vacante: true } },
+          },
         });
 
-        if (candidates.length > 0 || query?.minMatch) {
+        if (perfiles.length > 0) {
+          const mappedCandidates: Array<Candidate & { stage?: string }> = perfiles.map((p, idx) => {
+            const postu = p.postulaciones[0];
+            const techHabs = p.habilidades.filter((h) => h.habilidad.tipo === 'Técnica').map((h) => h.habilidad.nombre);
+            const softHabs = p.habilidades.filter((h) => h.habilidad.tipo === 'Blanda').map((h) => h.habilidad.nombre);
+            const score = postu?.ranking || 85 - idx * 5;
+
+            // Enlazar con avatar e id conocido si coincide por nombre
+            const memMatch = this.inMemoryCandidates.find(
+              (m) => m.name.toLowerCase().includes(p.nombre.toLowerCase()) || m.id === String(p.id),
+            );
+
+            return {
+              id: memMatch?.id || String(p.id),
+              rank: idx + 1,
+              name: `${p.nombre} ${p.apellido}`,
+              title: p.descripcion || memMatch?.title || 'Especialista de Sistemas',
+              experience: p.carrera ? `${p.carrera} (${p.anioCursado || 'Graduado'})` : memMatch?.experience || '4+ años',
+              avatar: memMatch?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+              matchScore: score,
+              matchLabel: score >= 90 ? 'Excelente Match' : score >= 80 ? 'Perfil Sólido' : 'Potencial Formativo',
+              techScore: +(score / 20).toFixed(1),
+              softScore: 4.2,
+              strengths: [techHabs.slice(0, 2).join(', '), softHabs[0]].filter(Boolean).join(' • ') || p.justificacion || 'Habilidades clave validadas',
+              stage: memMatch?.stage || 'Revisión Inicial',
+              radarScores: memMatch?.radarScores || {
+                kubernetes: 4.2,
+                zeroTrust: 4.0,
+                commExec: 4.0,
+                negotiation: 3.8,
+                finOps: 3.9,
+              },
+            };
+          });
+
+          let result = mappedCandidates;
+          if (query?.minMatch) {
+            result = result.filter((c) => c.matchScore >= query.minMatch!);
+          }
+          result.sort((a, b) => b.matchScore - a.matchScore);
           return {
-            total: candidates.length,
-            data: candidates.map((c) => this.toCandidate(c)),
+            total: result.length,
+            data: result,
           };
         }
       } catch {
@@ -61,11 +97,9 @@ export class RecruitmentService {
     }
 
     let result = [...this.inMemoryCandidates];
-
     if (query?.minMatch) {
       result = result.filter((c) => c.matchScore >= query.minMatch!);
     }
-
     result.sort((a, b) => b.matchScore - a.matchScore);
 
     return {
@@ -75,44 +109,27 @@ export class RecruitmentService {
   }
 
   async findOne(id: string) {
-    if (this.prisma) {
-      try {
-        const candidate = await this.prisma.candidate.findUnique({
-          where: { id },
-        });
-        if (candidate) {
-          return this.toCandidate(candidate);
-        }
-      } catch {
-        // Fallback a memoria
-      }
+    const all = await this.findAll();
+    const candidate = all.data.find((c) => c.id === id || String((c as any).rank) === id);
+    if (candidate) {
+      return candidate;
     }
 
-    const candidate = this.inMemoryCandidates.find((c) => c.id === id);
-    if (!candidate) {
+    const mem = this.inMemoryCandidates.find((c) => c.id === id);
+    if (!mem) {
       throw new NotFoundException(`Candidato con ID ${id} no encontrado`);
     }
-    return candidate;
+    return mem;
   }
 
   async updateStage(id: string, stage: string) {
-    if (this.prisma) {
-      try {
-        const updated = await this.prisma.candidate.update({
-          where: { id },
-          data: { stage },
-        });
-        return {
-          message: `Candidato ${updated.name} movido a la etapa "${stage}"`,
-          candidate: this.toCandidate(updated),
-        };
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     const candidate = await this.findOne(id);
     candidate.stage = stage;
+    const memIdx = this.inMemoryCandidates.findIndex((c) => c.id === id);
+    if (memIdx !== -1) {
+      this.inMemoryCandidates[memIdx].stage = stage;
+    }
+
     return {
       message: `Candidato ${candidate.name} movido a la etapa "${stage}"`,
       candidate,
@@ -120,27 +137,6 @@ export class RecruitmentService {
   }
 
   async sendOffer(id: string, offerDetails?: { salary?: string; startDate?: string }) {
-    if (this.prisma) {
-      try {
-        const updated = await this.prisma.candidate.update({
-          where: { id },
-          data: { stage: 'Oferta Enviada' },
-        });
-        return {
-          message: `¡Listo! Oferta formal de empleo enviada exitosamente a ${updated.name}.`,
-          candidateId: updated.id,
-          candidateName: updated.name,
-          stage: updated.stage,
-          salaryOffered: offerDetails?.salary || 'USD 8,500 / mes (Banda E7)',
-          startDate: offerDetails?.startDate || '2026-11-01',
-          status: 'SENT',
-          emittedAt: new Date().toISOString(),
-        };
-      } catch {
-        // Fallback a memoria
-      }
-    }
-
     const candidate = await this.findOne(id);
     candidate.stage = 'Oferta Enviada';
 
@@ -154,5 +150,69 @@ export class RecruitmentService {
       status: 'SENT',
       emittedAt: new Date().toISOString(),
     };
+  }
+
+  // Métodos específicos para las 6 tablas de Supabase
+  async getVacantes() {
+    if (this.prisma) {
+      try {
+        const vacantes = await this.prisma.vacante.findMany({
+          include: {
+            vacanteHabilidades: { include: { habilidad: true } },
+            postulaciones: { include: { perfil: true } },
+          },
+        });
+        if (vacantes.length > 0) return vacantes;
+      } catch {
+        // Continuar a fallback
+      }
+    }
+    return [];
+  }
+
+  async getPerfiles() {
+    if (this.prisma) {
+      try {
+        const perfiles = await this.prisma.perfil.findMany({
+          include: {
+            habilidades: { include: { habilidad: true } },
+            postulaciones: { include: { vacante: true } },
+          },
+        });
+        if (perfiles.length > 0) return perfiles;
+      } catch {
+        // Continuar a fallback
+      }
+    }
+    return [];
+  }
+
+  async getHabilidades() {
+    if (this.prisma) {
+      try {
+        const habs = await this.prisma.habilidad.findMany();
+        if (habs.length > 0) return habs;
+      } catch {
+        // Continuar a fallback
+      }
+    }
+    return [];
+  }
+
+  async getPostulaciones() {
+    if (this.prisma) {
+      try {
+        const postus = await this.prisma.postulacion.findMany({
+          include: {
+            perfil: true,
+            vacante: true,
+          },
+        });
+        if (postus.length > 0) return postus;
+      } catch {
+        // Continuar a fallback
+      }
+    }
+    return [];
   }
 }
