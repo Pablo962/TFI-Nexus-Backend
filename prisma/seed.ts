@@ -10,7 +10,9 @@ import {
   TALENT_PERSONS,
   CANDIDATES_DATA,
   INITIAL_USERS,
+  INITIAL_TRACKS,
   INITIAL_EVALUATIONS,
+  PORTER_ACTIVITIES,
   UNIDADES_DATA,
   COMPETENCIAS_DATA,
 } from '../src/data/seed-data.js';
@@ -500,7 +502,355 @@ async function main() {
   }
   console.log(`     ✓ ${INITIAL_USERS.length} usuarios con roles RBAC creados (Contraseña: Admin1234!).`);
 
-  console.log('✅ Base de datos Supabase poblada con éxito.');
+  // 6. Learning Tracks (Capacitaciones)
+  console.log('  -> Creando rutas de aprendizaje (LearningTrack)...');
+  for (const track of INITIAL_TRACKS) {
+    await prisma.learningTrack.upsert({
+      where: { id: track.id },
+      update: {
+        title: track.title,
+        technicalTitle: track.technicalTitle ?? null,
+        category: track.category,
+        level: track.level,
+        hours: track.hours,
+        enrolledCount: track.enrolledCount,
+        completionRate: track.completionRate,
+        gapTarget: track.gapTarget,
+        provider: track.provider,
+        certification: track.certification,
+        description: track.description,
+        enrolledEmployees: (track.enrolledEmployees as any) ?? null,
+      },
+      create: {
+        id: track.id,
+        title: track.title,
+        technicalTitle: track.technicalTitle ?? null,
+        category: track.category,
+        level: track.level,
+        hours: track.hours,
+        enrolledCount: track.enrolledCount,
+        completionRate: track.completionRate,
+        gapTarget: track.gapTarget,
+        provider: track.provider,
+        certification: track.certification,
+        description: track.description,
+        enrolledEmployees: (track.enrolledEmployees as any) ?? null,
+      },
+    });
+  }
+  console.log(`     ✓ ${INITIAL_TRACKS.length} rutas de aprendizaje creadas.`);
+
+  // 7. Porter Activities (Cadena de Valor de Porter)
+  console.log('  -> Creando actividades de cadena de valor (PorterActivity)...');
+  for (const act of PORTER_ACTIVITIES) {
+    await prisma.porterActivity.upsert({
+      where: { id: act.id },
+      update: {
+        step: act.step,
+        name: act.name,
+        subname: act.subname,
+        layer: act.id <= 5 ? 'primary' : 'support',
+        coverage: act.coverage,
+        coverageStatus: act.coverageStatus,
+        headcount: act.headcount,
+        costEfficiency: act.costEfficiency,
+        strategicNotes: act.aiRecommendation || act.description || null,
+        rolesList: (act.rolesList as any) ?? null,
+        topTalent: (act.topTalent as any) ?? null,
+        skillsMatrix: (act.skillsMatrix as any) ?? null,
+      },
+      create: {
+        id: act.id,
+        step: act.step,
+        name: act.name,
+        subname: act.subname,
+        layer: act.id <= 5 ? 'primary' : 'support',
+        coverage: act.coverage,
+        coverageStatus: act.coverageStatus,
+        headcount: act.headcount,
+        costEfficiency: act.costEfficiency,
+        strategicNotes: act.aiRecommendation || act.description || null,
+        rolesList: (act.rolesList as any) ?? null,
+        topTalent: (act.topTalent as any) ?? null,
+        skillsMatrix: (act.skillsMatrix as any) ?? null,
+      },
+    });
+  }
+  console.log(`     ✓ ${PORTER_ACTIVITIES.length} actividades de cadena de valor cargadas.`);
+
+  // 8. Reclutamiento y Selección - Modelo ER (Habilidad, Vacante, Postulante, Postulación)
+  console.log('  -> Creando catálogo de Habilidades para Selección (Habilidad)...');
+  const HABILIDADES_SEED = [
+    { id: 1, nombre: 'Arquitectura Cloud & Microservicios', tipo: 'Técnica' },
+    { id: 2, nombre: 'Seguridad Zero Trust & Criptografía', tipo: 'Técnica' },
+    { id: 3, nombre: 'DevOps & CI/CD Pipelines (Kubernetes)', tipo: 'Técnica' },
+    { id: 4, nombre: 'Ingeniería de Datos & Modelado SQL', tipo: 'Técnica' },
+    { id: 5, nombre: 'Liderazgo de Equipos & Comunicación', tipo: 'Blanda' },
+    { id: 6, nombre: 'Resolución de Problemas & Resiliencia', tipo: 'Blanda' },
+    { id: 7, nombre: 'Negociación & Gestión de Stakeholders', tipo: 'Blanda' },
+    { id: 8, nombre: 'Gestión Ágil de Proyectos (Scrum)', tipo: 'Blanda' },
+  ];
+
+  for (const h of HABILIDADES_SEED) {
+    await prisma.habilidad.upsert({
+      where: { id: h.id },
+      update: { nombre: h.nombre, tipo: h.tipo },
+      create: { id: h.id, nombre: h.nombre, tipo: h.tipo },
+    });
+  }
+  console.log(`     ✓ ${HABILIDADES_SEED.length} habilidades de selección creadas.`);
+
+  console.log('  -> Creando vacantes activas vinculadas a Puestos (Vacante)...');
+  const VACANTES_SEED = [
+    {
+      id: 1,
+      idPuesto: 'pue-arch-03',
+      titulo: 'Arquitecto de Soluciones Cloud Senior',
+      tipo: 'Tiempo Completo',
+      requisitos: 'Experiencia > 5 años en microservicios, AWS/GCP y Kubernetes',
+      beneficios: 'Bono por objetivos, prepaga premium, esquema híbrido flexible',
+      area: 'Tecnología e Innovación',
+      estado: 'Abierta',
+      habilidadesRequeridas: [1, 3, 5, 6],
+    },
+    {
+      id: 2,
+      idPuesto: 'pue-eng-08',
+      titulo: 'Ingeniero de Plataforma & DevOps',
+      tipo: 'Tiempo Completo',
+      requisitos: 'Sólido dominio de Terraform, Docker, Kubernetes y observabilidad',
+      beneficios: 'Presupuesto de capacitación técnica anual, horario flexible',
+      area: 'Operaciones e Infraestructura',
+      estado: 'Abierta',
+      habilidadesRequeridas: [3, 1, 6],
+    },
+    {
+      id: 3,
+      idPuesto: 'pue-sec-01',
+      titulo: 'Especialista en Ciberseguridad & SOC',
+      tipo: 'Tiempo Completo',
+      requisitos: 'Certificación CISSP/CEH y respuesta ante incidentes críticos',
+      beneficios: 'Equipamiento de última generación, esquema 100% remoto',
+      area: 'Seguridad de la Información',
+      estado: 'Abierta',
+      habilidadesRequeridas: [2, 6, 7],
+    },
+    {
+      id: 4,
+      idPuesto: 'pue-dat-04',
+      titulo: 'Analista de Datos & Business Intelligence',
+      tipo: 'Tiempo Completo',
+      requisitos: 'SQL avanzado, Python para analítica y pipelines ETL',
+      beneficios: 'Gimnasio cubierto, cobertura médica integral',
+      area: 'Datos y Analytics',
+      estado: 'Abierta',
+      habilidadesRequeridas: [4, 8, 5],
+    },
+  ];
+
+  for (const v of VACANTES_SEED) {
+    await prisma.vacante.upsert({
+      where: { id: v.id },
+      update: {
+        idPuesto: v.idPuesto,
+        titulo: v.titulo,
+        tipo: v.tipo,
+        requisitos: v.requisitos,
+        beneficios: v.beneficios,
+        area: v.area,
+        estado: v.estado,
+      },
+      create: {
+        id: v.id,
+        idPuesto: v.idPuesto,
+        titulo: v.titulo,
+        tipo: v.tipo,
+        requisitos: v.requisitos,
+        beneficios: v.beneficios,
+        area: v.area,
+        estado: v.estado,
+      },
+    });
+
+    for (const hId of v.habilidadesRequeridas) {
+      await prisma.vacanteHabilidad.upsert({
+        where: {
+          vacanteId_habilidadId: { vacanteId: v.id, habilidadId: hId },
+        },
+        update: {},
+        create: { vacanteId: v.id, habilidadId: hId },
+      });
+    }
+  }
+  console.log(`     ✓ ${VACANTES_SEED.length} vacantes con sus habilidades requeridas cargadas.`);
+
+  console.log('  -> Creando perfiles de postulantes (Postulante / Perfil)...');
+  const POSTULANTES_SEED = [
+    {
+      id: 1,
+      nombre: 'Mateo',
+      apellido: 'Benítez',
+      dni: '38.921.450',
+      correo: 'mateo.benitez@nexus.hr',
+      telefono: '+54 9 381 492-1049',
+      carrera: 'Licenciatura en Sistemas de Información',
+      anioCursado: 'Graduado (UTN FRT)',
+      legajo: 'POST-2026-001',
+      area: 'Tecnología e Innovación',
+      descripcion: 'Arquitecto cloud con más de 6 años liderando modernización hacia arquitecturas en microservicios y alta concurrencia.',
+      requisitos: 'Disponibilidad inmediata, jornada completa',
+      beneficios: 'Pretende esquema híbrido y plan de carrera técnica',
+      habilidades: [1, 3, 5, 6, 8],
+      postulaciones: [
+        {
+          vacanteId: 1,
+          ranking: 94,
+          justificacion: 'Cumple con el 100% de los requisitos críticos técnicos de arquitectura y kubernetes.',
+          etapa: 'Oferta Final',
+        },
+      ],
+    },
+    {
+      id: 2,
+      nombre: 'Camila',
+      apellido: 'Navarro',
+      dni: '40.112.839',
+      correo: 'camila.navarro@nexus.hr',
+      telefono: '+54 9 381 582-9912',
+      carrera: 'Ingeniería en Computación',
+      anioCursado: 'Graduada (UTN FRT)',
+      legajo: 'POST-2026-002',
+      area: 'Operaciones e Infraestructura',
+      descripcion: 'Ingeniera DevOps orientada a automatización de infraestructura como código y observabilidad.',
+      requisitos: 'Experiencia en pipelines multi-cloud',
+      beneficios: 'Interesada en certificaciones AWS y Kubernetes',
+      habilidades: [3, 1, 6, 8],
+      postulaciones: [
+        {
+          vacanteId: 2,
+          ranking: 88,
+          justificacion: 'Amplio dominio de CI/CD pipelines y automatización con Terraform y Kubernetes.',
+          etapa: 'Entrevista Técnica',
+        },
+      ],
+    },
+    {
+      id: 3,
+      nombre: 'Gonzalo',
+      apellido: 'Alonso',
+      dni: '36.402.190',
+      correo: 'gonzalo.alonso@nexus.hr',
+      telefono: '+54 9 381 601-3841',
+      carrera: 'Ingeniería en Ciberseguridad',
+      anioCursado: 'Graduado',
+      legajo: 'POST-2026-003',
+      area: 'Seguridad de la Información',
+      descripcion: 'Consultor de seguridad informática especializado en marcos de gobernanza Zero Trust y auditorías.',
+      requisitos: 'Experiencia en gestión de incidentes y SOC',
+      beneficios: 'Plan de salud familiar y horario flexible',
+      habilidades: [2, 6, 7, 5],
+      postulaciones: [
+        {
+          vacanteId: 3,
+          ranking: 82,
+          justificacion: 'Excelente base técnica en defensa de infraestructura y mitigación de amenazas.',
+          etapa: 'Validación Cultural',
+        },
+      ],
+    },
+    {
+      id: 4,
+      nombre: 'Lucía',
+      apellido: 'Méndez',
+      dni: '41.839.201',
+      correo: 'lucia.mendez@nexus.hr',
+      telefono: '+54 9 381 411-8092',
+      carrera: 'Licenciatura en Ciencias de la Computación',
+      anioCursado: 'Último año',
+      legajo: 'POST-2026-004',
+      area: 'Datos y Analytics',
+      descripcion: 'Analista de datos enfocada en modelado relacional, visualización y optimización de consultas complejas.',
+      requisitos: 'Disponibilidad part-time con proyección a full-time al graduarse',
+      beneficios: 'Flexibilidad horaria universitaria',
+      habilidades: [4, 8, 5, 6],
+      postulaciones: [
+        {
+          vacanteId: 4,
+          ranking: 75,
+          justificacion: 'Gran capacidad analítica y fundamentos sólidos en modelado de datos relacionales.',
+          etapa: 'Revisión Inicial',
+        },
+      ],
+    },
+  ];
+
+  for (const post of POSTULANTES_SEED) {
+    await prisma.postulante.upsert({
+      where: { id: post.id },
+      update: {
+        nombre: post.nombre,
+        apellido: post.apellido,
+        dni: post.dni,
+        correo: post.correo,
+        telefono: post.telefono,
+        carrera: post.carrera,
+        anioCursado: post.anioCursado,
+        legajo: post.legajo,
+        area: post.area,
+        descripcion: post.descripcion,
+        requisitos: post.requisitos,
+        beneficios: post.beneficios,
+      },
+      create: {
+        id: post.id,
+        nombre: post.nombre,
+        apellido: post.apellido,
+        dni: post.dni,
+        correo: post.correo,
+        telefono: post.telefono,
+        carrera: post.carrera,
+        anioCursado: post.anioCursado,
+        legajo: post.legajo,
+        area: post.area,
+        descripcion: post.descripcion,
+        requisitos: post.requisitos,
+        beneficios: post.beneficios,
+      },
+    });
+
+    for (const hId of post.habilidades) {
+      await prisma.perfilHabilidad.upsert({
+        where: {
+          perfilId_habilidadId: { perfilId: post.id, habilidadId: hId },
+        },
+        update: {},
+        create: { perfilId: post.id, habilidadId: hId },
+      });
+    }
+
+    for (const postu of post.postulaciones) {
+      await prisma.postulacion.upsert({
+        where: {
+          perfilId_vacanteId: { perfilId: post.id, vacanteId: postu.vacanteId },
+        },
+        update: {
+          ranking: postu.ranking,
+          justificacion: postu.justificacion,
+          etapa: postu.etapa,
+        },
+        create: {
+          perfilId: post.id,
+          vacanteId: postu.vacanteId,
+          ranking: postu.ranking,
+          justificacion: postu.justificacion,
+          etapa: postu.etapa,
+        },
+      });
+    }
+  }
+  console.log(`     ✓ ${POSTULANTES_SEED.length} postulantes con sus habilidades y postulaciones creados.`);
+
+  console.log('✅ Base de datos Supabase poblada con éxito con todos los módulos.');
 }
 
 main()

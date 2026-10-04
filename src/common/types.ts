@@ -288,3 +288,66 @@ export interface PorterActivity {
   }>;
   aiRecommendation: string;
 }
+
+export interface Habilidad {
+  id: number;
+  nombre: string;
+  tipo?: string;
+}
+
+export interface VacanteHabilidad {
+  vacanteId: number;
+  habilidadId: number;
+  habilidad?: Habilidad;
+}
+
+export interface PerfilHabilidad {
+  perfilId: number;
+  habilidadId: number;
+  habilidad?: Habilidad;
+}
+
+export interface Postulacion {
+  perfilId: number;
+  vacanteId: number;
+  ranking?: number;
+  justificacion?: string;
+  etapa?: string;
+  postulante?: Postulante;
+  vacante?: Vacante;
+}
+
+export interface Postulante {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni?: string;
+  fechaNacimiento?: string;
+  direccion?: string;
+  telefono?: string;
+  correo: string;
+  carrera?: string;
+  anioCursado?: string;
+  legajo?: string;
+  descripcion?: string;
+  area?: string;
+  requisitos?: string;
+  beneficios?: string;
+  perfilAsignado?: string;
+  justificacion?: string;
+  postulaciones?: Postulacion[];
+  habilidades?: PerfilHabilidad[];
+}
+
+export interface Vacante {
+  id: number;
+  idPuesto?: string;
+  titulo: string;
+  requisitos?: string;
+  tipo?: string;
+  area?: string;
+  beneficios?: string;
+  estado?: string;
+  vacanteHabilidades?: VacanteHabilidad[];
+  postulaciones?: Postulacion[];
+}

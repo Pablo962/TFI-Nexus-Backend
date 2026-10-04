@@ -35,5 +35,13 @@ describe('PrismaService', () => {
     expect(service.riesgoPuesto).toBeDefined();
     expect(service.relacionPuesto).toBeDefined();
     expect(service.estandarDesempeno).toBeDefined();
+    expect(service.learningTrack).toBeDefined();
+    expect(service.porterActivity).toBeDefined();
+    expect(service.vacante).toBeDefined();
+    expect(service.postulante).toBeDefined();
+    expect(service.habilidad).toBeDefined();
+    expect(service.postulacion).toBeDefined();
+    expect(service.vacanteHabilidad).toBeDefined();
+    expect(service.perfilHabilidad).toBeDefined();
   });
 });

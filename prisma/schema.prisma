@@ -83,6 +83,7 @@ model JobPosition {
   employees             Employee[]
   candidates            Candidate[]
   evaluations           Evaluation[]
+  vacantes              Vacante[]
 
   @@map("job_positions")
 }
@@ -320,5 +321,154 @@ model EstandarDesempeno {
   updatedAt   DateTime    @updatedAt
 
   @@map("estandares_desempeno")
+}
+
+// =======================================================================
+// MODELOS RESTAURADOS: CAPACITACIÓN Y CADENA DE VALOR
+// =======================================================================
+
+model LearningTrack {
+  id                String   @id
+  title             String
+  technicalTitle    String?
+  category          String
+  level             String
+  hours             Int
+  enrolledCount     Int      @default(0)
+  completionRate    Float    @default(0)
+  gapTarget         String
+  provider          String
+  certification     String
+  description       String
+  enrolledEmployees Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("learning_tracks")
+}
+
+model PorterActivity {
+  id               Int      @id
+  step             String
+  name             String
+  subname          String
+  layer            String   @default("primary")
+  coverage         Float    @default(90)
+  coverageStatus   String   @default("optimal")
+  headcount        Int      @default(10)
+  costEfficiency   String   @default("95% Óptimo")
+  strategicNotes   String?
+  rolesList        Json?
+  topTalent        Json?
+  skillsMatrix     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("porter_activities")
+}
+
+// =======================================================================
+// MODELO RELACIONAL DE RECLUTAMIENTO Y SELECCIÓN (MATCHING DE HABILIDADES)
+// =======================================================================
+
+model Vacante {
+  id                 Int                 @id @default(autoincrement()) @map("identificador")
+  idPuesto           String?             @map("id_puesto")
+  puesto             JobPosition?        @relation(fields: [idPuesto], references: [id], onDelete: SetNull)
+  titulo             String              @map("titulo")
+  requisitos         String?             @map("requisitos")
+  tipo               String?             @map("tipo")
+  area               String?             @map("area")
+  beneficios         String?             @map("beneficios")
+  estado             String              @default("Abierta") @map("estado")
+
+  postulaciones      Postulacion[]
+  vacanteHabilidades VacanteHabilidad[]
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("vacante")
+}
+
+model Postulante {
+  id              Int                 @id @default(autoincrement()) @map("identificador")
+  nombre          String              @map("nombre")
+  apellido        String              @map("apellido")
+  dni             String?             @map("dni")
+  fechaNacimiento DateTime?           @map("fecha_nacimiento")
+  direccion       String?             @map("direccion")
+  telefono        String?             @map("telefono")
+  correo          String              @map("correo")
+  carrera         String?             @map("carrera")
+  anioCursado     String?             @map("anio_cursado")
+  legajo          String?             @map("legajo")
+  descripcion     String?             @map("descripcion")
+  area            String?             @map("area")
+  requisitos      String?             @map("requisitos")
+  beneficios      String?             @map("beneficios")
+  perfilAsignado  String?             @map("perfil_asignado")
+  justificacion   String?             @map("justificacion")
+
+  postulaciones   Postulacion[]
+  habilidades     PerfilHabilidad[]
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@map("perfil")
+}
+
+model Habilidad {
+  id                 Int                 @id @default(autoincrement()) @map("identificador")
+  nombre             String              @map("nombre")
+  tipo               String?             @map("tipo") // Técnica | Blanda
+
+  vacanteHabilidades VacanteHabilidad[]
+  perfilHabilidades  PerfilHabilidad[]
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("habilidad")
+}
+
+model Postulacion {
+  perfilId       Int        @map("perfil_id")
+  vacanteId      Int        @map("vacante_id")
+  ranking        Int?       @map("ranking")
+  justificacion  String?    @map("justificacion")
+  etapa          String     @default("Revisión Inicial") @map("etapa")
+
+  postulante     Postulante @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  vacante        Vacante    @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@id([perfilId, vacanteId])
+  @@map("postulacion")
+}
+
+model VacanteHabilidad {
+  vacanteId    Int       @map("vacante_id")
+  habilidadId  Int       @map("habilidad_id")
+
+  vacante      Vacante   @relation(fields: [vacanteId], references: [id], onDelete: Cascade)
+  habilidad    Habilidad @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+
+  @@id([vacanteId, habilidadId])
+  @@map("vacante_habilidad")
+}
+
+model PerfilHabilidad {
+  perfilId     Int        @map("perfil_id")
+  habilidadId  Int        @map("habilidad_id")
+
+  postulante   Postulante @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  habilidad    Habilidad  @relation(fields: [habilidadId], references: [id], onDelete: Cascade)
+
+  @@id([perfilId, habilidadId])
+  @@map("perfil_habilidad")
 }
 

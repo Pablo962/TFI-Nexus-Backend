@@ -7,9 +7,28 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 export class TrainingService {
   private inMemoryTracks = [...INITIAL_TRACKS];
 
-  constructor() {}
+  constructor(@Optional() private readonly prisma?: PrismaService) {}
 
   async findAll(query?: { category?: string }) {
+    if (this.prisma) {
+      try {
+        const where: any = {};
+        if (query?.category && query.category !== 'all') {
+          where.category = { contains: query.category, mode: 'insensitive' };
+        }
+
+        const tracks = await this.prisma.learningTrack.findMany({ where });
+        if (tracks.length > 0 || query?.category) {
+          return {
+            total: tracks.length,
+            data: tracks,
+          };
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     let result = [...this.inMemoryTracks];
     if (query?.category && query.category !== 'all') {
       result = result.filter((t) => t.category.toLowerCase().includes(query.category!.toLowerCase()));
@@ -21,6 +40,19 @@ export class TrainingService {
   }
 
   async findOne(id: string) {
+    if (this.prisma) {
+      try {
+        const track = await this.prisma.learningTrack.findUnique({
+          where: { id },
+        });
+        if (track) {
+          return track;
+        }
+      } catch {
+        // Fallback a memoria
+      }
+    }
+
     const track = this.inMemoryTracks.find((t) => t.id === id);
     if (!track) {
       throw new NotFoundException(`Curso con ID ${id} no encontrado`);
